@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Download, Eye, Trash2, Plus } from "lucide-react";
+import { Download, Eye, Trash2, Plus, Receipt } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { format } from "date-fns";
 
@@ -86,34 +86,37 @@ const Ledger = () => {
   return (
     <DashboardLayout user={user}>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center animate-fade-in">
           <div>
-            <h1 className="text-3xl font-bold">Transaction Ledger</h1>
+            <h1 className="text-3xl font-bold text-primary neon-glow">Transaction Ledger</h1>
             <p className="text-muted-foreground">View and manage all your transactions</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/upload")}>
+            <Button variant="outline" onClick={() => navigate("/upload")} className="hover-lift">
               <Plus className="mr-2 h-4 w-4" />
               Add Transaction
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="hover-lift">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
           </div>
         </div>
 
-        <Card>
+        <Card className="stat-card neon-border animate-fade-up">
           <CardHeader>
             <CardTitle>All Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-center text-muted-foreground py-8">Loading transactions...</p>
+              <div className="text-center text-muted-foreground py-8">
+                <div className="inline-block animate-pulse-glow">Loading transactions...</div>
+              </div>
             ) : transactions.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 animate-scale-in">
+                <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 animate-float" />
                 <p className="text-muted-foreground mb-4">No transactions yet</p>
-                <Button onClick={() => navigate("/upload")}>
+                <Button onClick={() => navigate("/upload")} className="hover-lift">
                   <Plus className="mr-2 h-4 w-4" />
                   Upload Your First Receipt
                 </Button>
@@ -132,7 +135,7 @@ const Ledger = () => {
                 </TableHeader>
                 <TableBody>
                   {transactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
+                    <TableRow key={transaction.id} className="hover:bg-secondary/50 transition-colors">
                       <TableCell>
                         {format(new Date(transaction.date), "MMM dd, yyyy")}
                       </TableCell>
@@ -145,7 +148,7 @@ const Ledger = () => {
                           {transaction.category.replace(/_/g, " ")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono">
+                      <TableCell className="font-mono text-accent">
                         ${Number(transaction.amount).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -156,6 +159,7 @@ const Ledger = () => {
                             onClick={() => {
                               /* View details */
                             }}
+                            className="hover-lift"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -163,6 +167,7 @@ const Ledger = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(transaction.id)}
+                            className="hover-lift"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

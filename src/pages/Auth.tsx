@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calculator, Mail, Lock, ArrowLeft, User } from "lucide-react";
+import { Calculator, Mail, Lock, ArrowLeft, User, Receipt, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -73,42 +73,49 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-bg relative overflow-hidden flex items-center justify-center p-4">
-      {/* Decorative background */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
+    <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-4">
+      {/* Animated floating elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
+        <Receipt className="absolute top-20 left-10 w-16 h-16 animate-float text-primary" />
+        <BarChart3 className="absolute top-1/3 right-1/4 w-16 h-16 animate-float text-accent" style={{ animationDelay: "1s" }} />
+        <Calculator className="absolute bottom-20 right-10 w-14 h-14 animate-float text-primary" style={{ animationDelay: "2s" }} />
+      </div>
+      
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3lhbiIgc3Ryb2tlLW9wYWNpdHk9IjAuMDMiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50"></div>
 
       {/* Back button */}
       <Button
         variant="ghost"
         onClick={() => navigate("/")}
-        className="absolute top-8 left-8 text-white hover:bg-white/10 z-10"
+        className="absolute top-8 left-8 z-10 hover:bg-secondary"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
 
       {/* Auth Card */}
-      <div className="relative z-10 w-full max-w-md">
-        <div className="glass-card p-8 rounded-2xl">
+      <div className="relative z-10 w-full max-w-md animate-scale-in">
+        <div className="glass-card-hover p-8 rounded-2xl neon-border">
           <div className="flex justify-center mb-6">
-            <div className="p-3 bg-primary/20 rounded-xl">
+            <div className="p-3 neon-border bg-primary/10 rounded-xl animate-pulse-glow">
               <Calculator className="h-10 w-10 text-primary" />
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-center mb-2 text-white">
+          <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
             AI Bookkeeper
           </h1>
-          <p className="text-center text-white/70 mb-8">
+          <p className="text-center text-muted-foreground mb-8">
             Intelligent expense tracking powered by AI
           </p>
 
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 glass-card mb-6">
-              <TabsTrigger value="signin" className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Sign In
               </TabsTrigger>
-              <TabsTrigger value="signup" className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70">
+              <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Sign Up
               </TabsTrigger>
             </TabsList>
@@ -116,9 +123,9 @@ const Auth = () => {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="text-white">Email</Label>
+                  <Label htmlFor="signin-email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-white/50" />
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="signin-email"
                       type="email"
@@ -126,14 +133,14 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      className="pl-10 bg-secondary border-border"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="text-white">Password</Label>
+                  <Label htmlFor="signin-password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-white/50" />
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="signin-password"
                       type="password"
@@ -141,24 +148,24 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      className="pl-10 bg-secondary border-border"
                     />
                   </div>
                 </div>
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-white text-primary hover:bg-white/90 font-semibold"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold hover-lift"
                 >
                   {loading ? "Loading..." : "Sign In"}
                 </Button>
                 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/20" />
+                    <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-transparent px-2 text-white/60">Or continue with</span>
+                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
 
@@ -167,7 +174,7 @@ const Auth = () => {
                   variant="outline"
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="w-full hover-lift"
                 >
                   <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                     <path
@@ -195,9 +202,9 @@ const Auth = () => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="text-white">Full Name</Label>
+                  <Label htmlFor="signup-name">Full Name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-5 w-5 text-white/50" />
+                    <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="signup-name"
                       type="text"
@@ -205,14 +212,14 @@ const Auth = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      className="pl-10 bg-secondary border-border"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-white">Email</Label>
+                  <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-white/50" />
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="signup-email"
                       type="email"
@@ -220,14 +227,14 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      className="pl-10 bg-secondary border-border"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-white">Password</Label>
+                  <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-white/50" />
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="signup-password"
                       type="password"
@@ -236,24 +243,24 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      className="pl-10 bg-secondary border-border"
                     />
                   </div>
                 </div>
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-white text-primary hover:bg-white/90 font-semibold"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold hover-lift"
                 >
                   {loading ? "Loading..." : "Create Account"}
                 </Button>
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/20" />
+                    <span className="w-full border-t border-border" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-transparent px-2 text-white/60">Or continue with</span>
+                    <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
 
@@ -262,7 +269,7 @@ const Auth = () => {
                   variant="outline"
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="w-full hover-lift"
                 >
                   <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                     <path
