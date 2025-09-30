@@ -13,7 +13,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Download, Eye, Trash2, Plus, Receipt } from "lucide-react";
+import { 
+  Download, 
+  Eye, 
+  Trash2, 
+  Plus, 
+  Receipt 
+} from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { format } from "date-fns";
 
