@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 import { 
   DollarSign, 
   Receipt, 
@@ -14,7 +15,6 @@ import {
   BarChart3,
   Sparkles
 } from "lucide-react";
-import { toast } from "sonner";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 const Dashboard = () => {
