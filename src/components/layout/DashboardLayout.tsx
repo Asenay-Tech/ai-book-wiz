@@ -42,26 +42,29 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen gradient-bg">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 border-r bg-card p-4 flex flex-col">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="p-2 bg-primary/10 rounded">
+      <aside className="fixed left-0 top-0 h-full w-64 border-r border-white/10 glass-card p-4 flex flex-col z-50">
+        <div className="flex items-center gap-2 mb-8 animate-fade-in">
+          <div className="p-2 bg-primary/20 rounded-xl">
             <Calculator className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="font-bold text-lg">AI Bookkeeper</h2>
+            <h2 className="font-bold text-lg gradient-text">AI Bookkeeper</h2>
             <p className="text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>
 
         <nav className="flex-1 space-y-2">
-          {navItems.map((item) => (
+          {navItems.map((item, index) => (
             <Button
               key={item.path}
               variant={location.pathname === item.path ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className={`w-full justify-start hover-scale ${
+                location.pathname === item.path ? 'gradient-card' : ''
+              }`}
               onClick={() => navigate(item.path)}
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <item.icon className="mr-2 h-4 w-4" />
               {item.label}
@@ -69,7 +72,11 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
           ))}
         </nav>
 
-        <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleSignOut}>
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-destructive hover:bg-destructive/10 hover-scale" 
+          onClick={handleSignOut}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
         </Button>

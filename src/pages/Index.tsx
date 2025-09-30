@@ -62,119 +62,65 @@ const Index = () => {
             Upload a receipt or CSV. Get categorized entries, dashboards, and AI-driven recommendations instantly.
           </p>
           
-          <Button 
-            size="lg" 
-            onClick={() => navigate("/auth")}
-            className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 h-auto shadow-2xl"
-          >
-            <Upload className="mr-2 h-5 w-5" />
-            Upload a File
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button 
+              size="lg" 
+              onClick={() => navigate("/auth")}
+              className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 h-auto shadow-2xl hover-scale"
+            >
+              <Upload className="mr-2 h-5 w-5" />
+              Try it Free — No Sign-Up Required
+            </Button>
+          </div>
         </div>
 
         {/* Feature Cards */}
         <div className="grid md:grid-cols-3 gap-6 mt-20">
-          <div className="glass-card p-8 rounded-2xl hover:scale-105 transition-transform duration-300">
-            <div className="inline-flex p-4 bg-primary/20 rounded-xl mb-4">
+          <div className="glass-card p-8 rounded-2xl hover-scale hover-glow animate-fade-up">
+            <div className="inline-flex p-4 bg-primary/20 rounded-xl mb-4 animate-pulse-glow">
               <Upload className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-2xl font-semibold mb-3 text-white">Smart OCR</h3>
             <p className="text-white/70 leading-relaxed">
-              Extract data from PDF receipts, images, and CSV files automatically
+              Extract data from PDF receipts, images, and CSV files automatically with AI-powered recognition
             </p>
           </div>
 
-          <div className="glass-card p-8 rounded-2xl hover:scale-105 transition-transform duration-300">
-            <div className="inline-flex p-4 bg-primary/20 rounded-xl mb-4">
+          <div className="glass-card p-8 rounded-2xl hover-scale hover-glow animate-fade-up" style={{ animationDelay: "0.2s" }}>
+            <div className="inline-flex p-4 bg-primary/20 rounded-xl mb-4 animate-pulse-glow">
               <BarChart3 className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-2xl font-semibold mb-3 text-white">Live Dashboards</h3>
             <p className="text-white/70 leading-relaxed">
-              Real-time charts and KPIs updated with every upload
+              Real-time charts and KPIs updated with every upload. Track your spending at a glance.
             </p>
           </div>
 
-          <div className="glass-card p-8 rounded-2xl hover:scale-105 transition-transform duration-300">
-            <div className="inline-flex p-4 bg-primary/20 rounded-xl mb-4">
+          <div className="glass-card p-8 rounded-2xl hover-scale hover-glow animate-fade-up" style={{ animationDelay: "0.4s" }}>
+            <div className="inline-flex p-4 bg-primary/20 rounded-xl mb-4 animate-pulse-glow">
               <Brain className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-2xl font-semibold mb-3 text-white">AI Insights</h3>
             <p className="text-white/70 leading-relaxed">
-              Smart predictions and cost-saving recommendations
+              Smart predictions, spending patterns, and personalized cost-saving recommendations
             </p>
           </div>
         </div>
 
-        {/* Pricing Section */}
-        <div className="mt-32">
-          <h2 className="text-4xl font-bold text-center mb-16 text-white">Choose Your Plan</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { 
-                name: "Free", 
-                price: "$0", 
-                uploads: "2", 
-                features: ["2 uploads/month", "Basic OCR", "Manual entry"],
-                highlight: false
-              },
-              { 
-                name: "Starter", 
-                price: "$5", 
-                uploads: "50", 
-                features: ["50 uploads/month", "AI summaries", "Chat assistant", "Priority support"],
-                highlight: false
-              },
-              { 
-                name: "Pro", 
-                price: "$15", 
-                uploads: "200", 
-                features: ["200 uploads/month", "Reconciliation", "AI predictions", "Insights", "Export data"],
-                highlight: true
-              },
-              { 
-                name: "Business", 
-                price: "$39", 
-                uploads: "∞", 
-                features: ["Unlimited uploads", "Team accounts", "Admin panel", "API access"],
-                highlight: false
-              }
-            ].map((plan) => (
-              <div 
-                key={plan.name} 
-                className={`glass-card p-8 rounded-2xl hover:scale-105 transition-all duration-300 ${
-                  plan.highlight ? 'ring-2 ring-primary shadow-2xl shadow-primary/20' : ''
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="text-xs font-semibold text-primary mb-2 uppercase tracking-wider">
-                    Most Popular
-                  </div>
-                )}
-                <h3 className="text-2xl font-bold mb-2 text-white">{plan.name}</h3>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold text-white">{plan.price}</span>
-                  {plan.price !== "$0" && <span className="text-white/60">/mo</span>}
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-white/80">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  className={`w-full ${
-                    plan.highlight 
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                      : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                  }`}
-                  onClick={() => navigate("/auth")}
-                >
-                  Get Started
-                </Button>
-              </div>
-            ))}
+        {/* CTA Section */}
+        <div className="mt-32 text-center">
+          <div className="glass-card p-12 rounded-3xl max-w-4xl mx-auto animate-scale-in">
+            <h2 className="text-4xl font-bold mb-4 text-white">Ready to Transform Your Bookkeeping?</h2>
+            <p className="text-xl text-white/70 mb-8">
+              Start uploading receipts and let AI handle the rest. No credit card required.
+            </p>
+            <Button 
+              size="lg" 
+              onClick={() => navigate("/auth")}
+              className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 h-auto shadow-2xl hover-scale"
+            >
+              Get Started Now
+            </Button>
           </div>
         </div>
       </main>
