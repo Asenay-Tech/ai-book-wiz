@@ -31,6 +31,8 @@ import {
   Shield,
   Plug,
   Crown,
+  AlertTriangle,
+  TrendingDown,
 } from "lucide-react";
 import FloatingChat from "@/components/FloatingChat";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -97,6 +99,19 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         { icon: TrendingUpIcon, label: "Forecasting", tab: "forecast" },
         { icon: FileBarChart, label: "Reports", tab: "reports" },
         { icon: Store, label: "Industry Packs", tab: "industry" },
+      ]
+    },
+    { 
+      icon: Shield, 
+      label: "Owner Tools", 
+      path: "/owner-tools",
+      subItems: [
+        { icon: Settings, label: "Control Panel", tab: "control" },
+        { icon: Eye, label: "Transparency", tab: "transparency" },
+        { icon: AlertTriangle, label: "Fraud Detection", tab: "fraud" },
+        { icon: TrendingDown, label: "Cost Control", tab: "costs" },
+        { icon: Sparkles, label: "Automation", tab: "automation" },
+        { icon: TrendingUp, label: "Growth & Planning", tab: "growth" },
       ]
     },
     { 

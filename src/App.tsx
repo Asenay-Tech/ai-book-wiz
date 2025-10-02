@@ -11,6 +11,7 @@ import Ledger from "./pages/Ledger";
 import Insights from "./pages/Insights";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
+import OwnerTools from "./pages/OwnerTools";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/upload" element={<Upload />} />
           <Route path="/ledger" element={<Ledger />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/owner-tools" element={<OwnerTools />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
