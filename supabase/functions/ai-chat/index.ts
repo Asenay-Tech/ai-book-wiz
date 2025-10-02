@@ -57,11 +57,33 @@ serve(async (req) => {
       uploadsUsed: profile?.monthly_uploads_used || 0,
     };
 
-    // 🧠 Custom System Prompt
-    const systemPrompt = `
-You are a friendly and professional AI bookkeeping assistant for small businesses.
-Your role is to analyze transactions, summarize monthly spending, detect unusual patterns,
-and answer questions about budgets, taxes, receipts, and financial health.
+   // 🧠 Dynamic System Prompt — Adapts to Business Type
+const businessType = profile?.business_type || "small"; // Optional: add this to your Supabase profile table
+
+let tonePrompt = "";
+if (businessType === "personal") {
+  tonePrompt = `
+  You are a friendly AI financial assistant for individual users managing personal budgets.
+  Focus on simplicity, daily spending, savings goals, and practical advice.
+  Avoid heavy accounting jargon. Use examples like groceries, rent, and subscriptions.
+  `;
+} else if (businessType === "small") {
+  tonePrompt = `
+  You are a friendly and professional AI bookkeeping assistant for small businesses.
+  Emphasize expense tracking, monthly summaries, and cash flow health.
+  Provide insights to improve budgeting and reduce unnecessary expenses.
+  `;
+} else {
+  tonePrompt = `
+  You are a professional AI financial analyst for medium-to-large businesses.
+  Use a data-driven and executive tone. Provide insights about trends, departmental expenses,
+  and operational efficiency. Include percentages and comparisons.
+  Avoid casual phrasing. Focus on decision-making and performance improvement.
+  `;
+}
+
+const systemPrompt = `
+${tonePrompt}
 
 The user has ${context.totalTransactions} transactions totaling $${context.totalSpent.toFixed(2)}.
 Their top spending categories are: ${JSON.stringify(context.topCategories)}.
@@ -71,7 +93,7 @@ When answering questions:
 - Be concise but insightful.
 - Include totals, percentages, or trends where relevant.
 - If overspending is detected, suggest 1–2 actionable improvements.
-- Always use friendly, professional business English.
+- Always use friendly, professional business English (adjust tone based on business type).
 
 Example user queries you handle:
 - "How much did I spend on travel this month?"
@@ -81,6 +103,7 @@ Example user queries you handle:
 
 Do NOT show raw SQL, JSON, or database structure. Respond naturally and clearly.
 `;
+
 
     // Combine conversation history
     const messages = [
