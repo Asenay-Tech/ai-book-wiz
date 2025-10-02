@@ -158,44 +158,54 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Upgrade Your Plan</h2>
-          <div className="grid gap-3 md:gap-4 sm:grid-cols-2">
-            {plans.map((plan) => (
-              <Card key={plan.name} className={plan.name === profile?.subscription_tier ? "border-primary" : ""}>
-                <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>
-                    <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-                    {plan.price !== "$0" && <span className="text-muted-foreground">/month</span>}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="font-semibold text-sm">
-                      {typeof plan.uploads === "number" ? `${plan.uploads} uploads` : plan.uploads}
-                    </p>
-                  </div>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className="w-full" 
-                    variant={plan.name === profile?.subscription_tier ? "secondary" : "default"}
-                    disabled={plan.name === profile?.subscription_tier}
-                  >
-                    {plan.name === profile?.subscription_tier ? "Current Plan" : "Upgrade"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <Card className="border-primary bg-gradient-to-r from-primary/10 to-accent/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              Upgrade Your Plan
+            </CardTitle>
+            <CardDescription>
+              Unlock more features and increase your upload limits
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:gap-4 sm:grid-cols-2">
+              {plans.map((plan) => (
+                <Card key={plan.name} className={plan.name === profile?.subscription_tier ? "border-primary" : ""}>
+                  <CardHeader>
+                    <CardTitle>{plan.name}</CardTitle>
+                    <CardDescription>
+                      <span className="text-3xl font-bold text-foreground">{plan.price}</span>
+                      {plan.price !== "$0" && <span className="text-muted-foreground">/month</span>}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {typeof plan.uploads === "number" ? `${plan.uploads} uploads` : plan.uploads}
+                      </p>
+                    </div>
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button 
+                      className="w-full" 
+                      variant={plan.name === profile?.subscription_tier ? "secondary" : "default"}
+                      disabled={plan.name === profile?.subscription_tier}
+                    >
+                      {plan.name === profile?.subscription_tier ? "Current Plan" : "Upgrade"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

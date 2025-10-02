@@ -13,7 +13,11 @@ import {
   MessageSquare,
   FileSpreadsheet,
   BarChart3,
-  Sparkles
+  Sparkles,
+  Clock,
+  PiggyBank,
+  FileText,
+  Zap
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
@@ -119,6 +123,81 @@ const Dashboard = () => {
                   {getUploadLimit() - stats.monthlyUploads} uploads remaining this month
                 </p>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Savings Meter */}
+        <Card className="stat-card hover-glow animate-fade-up neon-border bg-gradient-to-br from-primary/10 to-accent/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PiggyBank className="h-5 w-5 text-primary" />
+              Monthly Savings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Time Saved</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-primary animate-counter">
+                    {Math.floor((stats.receiptsUploaded * 5) / 60)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">hours</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Money Saved</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-accent animate-counter">
+                    ${(stats.receiptsUploaded * 2.5).toFixed(0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>Based on {stats.receiptsUploaded} automated receipts</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions Row */}
+        <Card className="stat-card hover-glow animate-fade-up">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
+                onClick={() => navigate("/upload")}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Invoice
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-accent/10 hover:text-accent hover:border-accent"
+                onClick={() => navigate("/insights")}
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analyze Expenses
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
+                onClick={() => navigate("/ledger")}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Generate Report
+              </Button>
             </div>
           </CardContent>
         </Card>

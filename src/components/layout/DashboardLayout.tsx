@@ -12,7 +12,9 @@ import {
   LogOut,
   Calculator,
   Menu,
+  Sparkles,
 } from "lucide-react";
+import FloatingChat from "@/components/FloatingChat";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sheet,
@@ -31,6 +33,7 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -47,7 +50,6 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
     { icon: Upload, label: "Upload", path: "/upload" },
     { icon: FileText, label: "Ledger", path: "/ledger" },
     { icon: TrendingUp, label: "Insights", path: "/insights" },
-    { icon: MessageSquare, label: "AI Chat", path: "/chat" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
@@ -86,6 +88,19 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
             {item.label}
           </Button>
         ))}
+        
+        {/* AI Chat Button */}
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-sm md:text-base hover:bg-muted"
+          onClick={() => {
+            setIsChatOpen(true);
+            setIsOpen(false);
+          }}
+        >
+          <MessageSquare className="mr-2 md:mr-3 h-4 w-4" />
+          AI Chat
+        </Button>
       </nav>
 
       {/* Sign Out */}
@@ -114,18 +129,29 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
               </div>
               <h2 className="font-bold text-primary">AI Bookkeeper</h2>
             </div>
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] p-0 bg-card/95 backdrop-blur-xl">
-                <div className="flex flex-col h-full">
-                  <SidebarContent />
-                </div>
-              </SheetContent>
-            </Sheet>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg"
+                onClick={() => navigate("/settings")}
+              >
+                <Sparkles className="mr-1 h-4 w-4" />
+                Upgrade
+              </Button>
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hover:bg-primary/10">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] p-0 bg-card/95 backdrop-blur-xl">
+                  <div className="flex flex-col h-full">
+                    <SidebarContent />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </header>
       )}
@@ -139,10 +165,33 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto w-full">
+        {/* Desktop Header with Upgrade Button */}
+        {!isMobile && (
+          <div className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
+            <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Welcome back, {user?.email}</span>
+              </div>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold shadow-lg"
+                onClick={() => navigate("/settings")}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                🚀 Upgrade Plan
+              </Button>
+            </div>
+          </div>
+        )}
+        
         <div className="container mx-auto p-4 md:p-6">
           {children}
         </div>
       </main>
+
+      {/* Floating Chat Widget */}
+      <FloatingChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} userId={user?.id} />
     </div>
   );
 };
