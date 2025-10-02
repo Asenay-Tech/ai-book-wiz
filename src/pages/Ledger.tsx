@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { format } from "date-fns";
+import PageTabs from "@/components/PageTabs";
+import { AllTransactionsTab, NeedsReviewTab, ReconcileTab, VendorsTab } from "./LedgerTabs";
 
 const Ledger = () => {
   const navigate = useNavigate();
@@ -110,79 +112,38 @@ const Ledger = () => {
         </div>
 
         <Card className="stat-card neon-border animate-fade-up">
-          <CardHeader>
-            <CardTitle className="text-lg md:text-xl">All Transactions</CardTitle>
-          </CardHeader>
           <CardContent className="p-0 md:p-6">
-            {loading ? (
-              <div className="text-center text-muted-foreground py-8">
-                <div className="inline-block animate-pulse-glow">Loading transactions...</div>
-              </div>
-            ) : transactions.length === 0 ? (
-              <div className="text-center py-12 animate-scale-in">
-                <Receipt className="h-16 w-16 text-muted-foreground mx-auto mb-4 animate-float" />
-                <p className="text-muted-foreground mb-4">No transactions yet</p>
-                <Button onClick={() => navigate("/upload")} className="hover-lift">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Upload Your First Receipt
-                </Button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs md:text-sm">Date</TableHead>
-                    <TableHead className="text-xs md:text-sm">Description</TableHead>
-                    <TableHead className="text-xs md:text-sm hidden sm:table-cell">Vendor</TableHead>
-                    <TableHead className="text-xs md:text-sm hidden md:table-cell">Category</TableHead>
-                    <TableHead className="text-xs md:text-sm">Amount</TableHead>
-                    <TableHead className="text-xs md:text-sm text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((transaction) => (
-                    <TableRow key={transaction.id} className="hover:bg-secondary/50 transition-colors">
-                      <TableCell className="text-xs md:text-sm">
-                        {format(new Date(transaction.date), "MMM dd")}
-                      </TableCell>
-                      <TableCell className="font-medium text-xs md:text-sm">
-                        {transaction.description}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs md:text-sm">{transaction.vendor || "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge className={`${getCategoryColor(transaction.category)} text-xs`}>
-                          {transaction.category.replace(/_/g, " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-accent text-xs md:text-sm">
-                        ${Number(transaction.amount).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1 md:gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover-lift h-8 w-8 md:h-9 md:w-9"
-                          >
-                            <Eye className="h-3 w-3 md:h-4 md:w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(transaction.id)}
-                            className="hover-lift h-8 w-8 md:h-9 md:w-9"
-                          >
-                            <Trash2 className="h-3 w-3 md:h-4 md:w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              </div>
-            )}
+            <PageTabs
+              defaultTab="all"
+              tabs={[
+                {
+                  value: "all",
+                  label: "All Transactions",
+                  content: <AllTransactionsTab
+                    transactions={transactions}
+                    loading={loading}
+                    handleDelete={handleDelete}
+                    getCategoryColor={getCategoryColor}
+                    navigate={navigate}
+                  />
+                },
+                {
+                  value: "review",
+                  label: "Needs Review",
+                  content: <NeedsReviewTab />
+                },
+                {
+                  value: "reconcile",
+                  label: "Reconciliation",
+                  content: <ReconcileTab />
+                },
+                {
+                  value: "vendors",
+                  label: "Vendors",
+                  content: <VendorsTab />
+                }
+              ]}
+            />
           </CardContent>
         </Card>
       </div>

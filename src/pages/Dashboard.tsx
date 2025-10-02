@@ -17,14 +17,24 @@ import {
   Clock,
   PiggyBank,
   FileText,
-  Zap
+  Zap,
+  QrCode,
+  Camera,
+  GitCompareArrows,
+  AlertCircle,
+  TrendingDown,
+  TrendingUpIcon,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useIsMobile } from "@/hooks/use-mobile";
+import FloatingChat from "@/components/FloatingChat";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [stats, setStats] = useState({
     totalTransactions: 0,
     totalAmount: 0,
@@ -173,34 +183,169 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3">
               <Button
                 variant="outline"
                 className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
-                onClick={() => navigate("/upload")}
+                onClick={() => navigate("/upload?tab=files")}
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Invoice
               </Button>
+              {isMobile && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => navigate("/upload?tab=qr")}
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Scan QR
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
+                    onClick={() => navigate("/upload?tab=qr")}
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    Take Photo
+                  </Button>
+                </>
+              )}
               <Button
                 variant="outline"
                 className="w-full justify-start hover:bg-accent/10 hover:text-accent hover:border-accent"
-                onClick={() => navigate("/insights")}
+                onClick={() => navigate("/upload?tab=csv")}
               >
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Analyze Expenses
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Import CSV
               </Button>
               <Button
                 variant="outline"
                 className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
-                onClick={() => navigate("/ledger")}
+                onClick={() => navigate("/ledger?tab=reconcile")}
+              >
+                <GitCompareArrows className="mr-2 h-4 w-4" />
+                Reconciliation
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-accent/10 hover:text-accent hover:border-accent"
+                onClick={() => navigate("/insights?tab=analytics")}
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analyze
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
+                onClick={() => navigate("/insights?tab=budgets")}
+              >
+                <DollarSign className="mr-2 h-4 w-4" />
+                Add Budget
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-accent/10 hover:text-accent hover:border-accent"
+                onClick={() => navigate("/insights?tab=reports")}
               >
                 <FileText className="mr-2 h-4 w-4" />
-                Generate Report
+                Reports
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start hover:bg-primary/10 hover:text-primary hover:border-primary"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                AI Chat
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Key Metrics Row */}
+        <Card className="stat-card hover-glow animate-fade-up">
+          <CardHeader>
+            <CardTitle>Key Metrics (MTD)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-2xl font-bold text-accent animate-counter">${stats.totalAmount.toFixed(2)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Transactions</p>
+                <p className="text-2xl font-bold text-primary animate-counter">{stats.totalTransactions}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Receipts Processed</p>
+                <p className="text-2xl font-bold text-accent animate-counter">{stats.receiptsUploaded}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Uploads Used</p>
+                <p className="text-2xl font-bold text-primary animate-counter">{stats.monthlyUploads}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Insight Cards Row */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="stat-card hover-lift hover-glow cursor-pointer" onClick={() => navigate("/insights?tab=analytics")}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUpIcon className="h-5 w-5 text-primary" />
+                Top Category This Month
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-3xl font-bold text-primary">Groceries</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <TrendingUp className="h-4 w-4 text-success" />
+                  <span className="text-success">+15%</span> vs last month
+                </p>
+                <p className="text-xs text-muted-foreground">$1,245 spent</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="stat-card hover-lift hover-glow cursor-pointer" onClick={() => navigate("/ledger?tab=review")}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-warning" />
+                Unusual Spend Watch
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold">Office Supplies</p>
+                <p className="text-sm text-muted-foreground">$450 - 3x higher than usual</p>
+                <p className="text-xs text-warning">Why: Bulk purchase detected</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="stat-card hover-lift hover-glow cursor-pointer" onClick={() => navigate("/insights?tab=forecast")}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUpIcon className="h-5 w-5 text-accent" />
+                30-Day Cash Estimate
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-3xl font-bold text-accent">$8,200</p>
+                <p className="text-sm text-muted-foreground">Projected available</p>
+                <div className="inline-block px-2 py-1 rounded-full bg-success/20 text-success text-xs font-medium">
+                  On Track
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -296,13 +441,14 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/chat")} variant="outline" className="w-full hover-lift">
+            <Button onClick={() => setIsChatOpen(true)} variant="outline" className="w-full hover-lift">
               <MessageSquare className="mr-2 h-4 w-4" />
               Chat with AI Assistant
             </Button>
           </CardContent>
         </Card>
       </div>
+      <FloatingChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} userId={user?.id} />
     </DashboardLayout>
   );
 };

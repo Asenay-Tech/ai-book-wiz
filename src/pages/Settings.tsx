@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Loader2, Crown } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
+import PageTabs from "@/components/PageTabs";
+import { ProfileTab, BusinessTypeTab, AuditTab, IntegrationsTab, PlanTab } from "./SettingsTabs";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -99,111 +101,46 @@ const Settings = () => {
           <p className="text-sm md:text-base text-muted-foreground">Manage your account and subscription</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>Update your personal and company details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={user?.email || ""} disabled />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name (Optional)</Label>
-                <Input
-                  id="companyName"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                />
-              </div>
-
-              <Button type="submit" disabled={updating}>
-                {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Plan</CardTitle>
-            <CardDescription>Your subscription details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold capitalize">{profile?.subscription_tier || "Free"}</p>
-                <p className="text-sm text-muted-foreground">
-                  {profile?.monthly_uploads_used || 0} uploads used this month
-                </p>
-              </div>
-              <Badge variant="secondary">
-                <Crown className="mr-1 h-3 w-3" />
-                Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-primary bg-gradient-to-r from-primary/10 to-accent/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-primary" />
-              Upgrade Your Plan
-            </CardTitle>
-            <CardDescription>
-              Unlock more features and increase your upload limits
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:gap-4 sm:grid-cols-2">
-              {plans.map((plan) => (
-                <Card key={plan.name} className={plan.name === profile?.subscription_tier ? "border-primary" : ""}>
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>
-                      <span className="text-3xl font-bold text-foreground">{plan.price}</span>
-                      {plan.price !== "$0" && <span className="text-muted-foreground">/month</span>}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="font-semibold text-sm">
-                        {typeof plan.uploads === "number" ? `${plan.uploads} uploads` : plan.uploads}
-                      </p>
-                    </div>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm">
-                          <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button 
-                      className="w-full" 
-                      variant={plan.name === profile?.subscription_tier ? "secondary" : "default"}
-                      disabled={plan.name === profile?.subscription_tier}
-                    >
-                      {plan.name === profile?.subscription_tier ? "Current Plan" : "Upgrade"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+        <Card className="stat-card neon-border">
+          <CardContent className="pt-6">
+            <PageTabs
+              defaultTab="profile"
+              tabs={[
+                {
+                  value: "profile",
+                  label: "Profile",
+                  content: <ProfileTab 
+                    user={user}
+                    fullName={fullName}
+                    setFullName={setFullName}
+                    companyName={companyName}
+                    setCompanyName={setCompanyName}
+                    handleUpdate={handleUpdate}
+                    updating={updating}
+                  />
+                },
+                {
+                  value: "business-type",
+                  label: "Business Type",
+                  content: <BusinessTypeTab />
+                },
+                {
+                  value: "audit",
+                  label: "Team & Audit",
+                  content: <AuditTab />
+                },
+                {
+                  value: "integrations",
+                  label: "Integrations",
+                  content: <IntegrationsTab />
+                },
+                {
+                  value: "plan",
+                  label: "Plan & Usage",
+                  content: <PlanTab profile={profile} plans={plans} />
+                }
+              ]}
+            />
           </CardContent>
         </Card>
       </div>

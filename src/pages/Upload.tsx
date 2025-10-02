@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Upload as UploadIcon, Loader2, FileText, Image as ImageIcon, Camera, QrCode } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageTabs from "@/components/PageTabs";
+import { FilesTab, QRTab, CSVTab } from "./UploadTabs";
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -102,114 +104,42 @@ const Upload = () => {
           <p className="text-sm md:text-base text-muted-foreground">Upload and process receipts with AI-powered OCR</p>
         </div>
 
-        {/* Upload Method Selector */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
-          <Card 
-            className={`cursor-pointer hover-scale hover-glow transition-all ${uploadMethod === 'file' ? 'ring-2 ring-primary' : ''}`}
-            onClick={() => setUploadMethod('file')}
-          >
-            <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6 text-center">
-              <UploadIcon className={`h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 ${uploadMethod === 'file' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-xs md:text-sm font-medium">File Upload</p>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`cursor-pointer hover-scale hover-glow transition-all ${uploadMethod === 'camera' ? 'ring-2 ring-primary' : ''}`}
-            onClick={() => setUploadMethod('camera')}
-          >
-            <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6 text-center">
-              <Camera className={`h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 ${uploadMethod === 'camera' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-xs md:text-sm font-medium">Take Photo</p>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`cursor-pointer hover-scale hover-glow transition-all ${uploadMethod === 'qr' ? 'ring-2 ring-primary' : ''}`}
-            onClick={() => setUploadMethod('qr')}
-          >
-            <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6 text-center">
-              <QrCode className={`h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 ${uploadMethod === 'qr' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-xs md:text-sm font-medium">Scan QR</p>
-            </CardContent>
-          </Card>
-        </div>
-
         <Card className="gradient-card animate-fade-in">
-          <CardHeader>
-            <CardTitle>
-              {uploadMethod === 'file' && 'Select File'}
-              {uploadMethod === 'camera' && 'Take a Photo'}
-              {uploadMethod === 'qr' && 'Scan QR Code'}
-            </CardTitle>
-            <CardDescription>
-              {uploadMethod === 'file' && 'Upload images (JPG, PNG) or PDF files. AI will automatically extract transaction details.'}
-              {uploadMethod === 'camera' && 'Use your device camera to capture a receipt photo.'}
-              {uploadMethod === 'qr' && 'Point your camera at a QR code on a receipt or invoice.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center bg-primary/5">
-              {selectedFile ? (
-                <div className="space-y-4 animate-scale-in">
-                  <div className="flex justify-center">
-                    {selectedFile.type.startsWith('image/') ? (
-                      <ImageIcon className="h-16 w-16 text-primary animate-pulse-glow" />
-                    ) : (
-                      <FileText className="h-16 w-16 text-primary animate-pulse-glow" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">{selectedFile.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {(selectedFile.size / 1024).toFixed(2)} KB
-                    </p>
-                  </div>
-                  <Button variant="outline" onClick={() => setSelectedFile(null)} className="hover-scale">
-                    Change File
-                  </Button>
-                </div>
-              ) : (
-                <Label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="space-y-4">
-                    {uploadMethod === 'file' && <UploadIcon className="h-16 w-16 mx-auto text-muted-foreground" />}
-                    {uploadMethod === 'camera' && <Camera className="h-16 w-16 mx-auto text-primary animate-pulse-glow" />}
-                    {uploadMethod === 'qr' && <QrCode className="h-16 w-16 mx-auto text-primary animate-pulse-glow" />}
-                    <div>
-                      <p className="text-lg font-medium">
-                        {uploadMethod === 'file' && 'Click to upload or drag and drop'}
-                        {uploadMethod === 'camera' && 'Click to open camera'}
-                        {uploadMethod === 'qr' && 'Click to scan QR code'}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {uploadMethod === 'file' && 'PNG, JPG or PDF (max 10MB)'}
-                        {uploadMethod === 'camera' && 'Take a clear photo of your receipt'}
-                        {uploadMethod === 'qr' && 'Point camera at the QR code'}
-                      </p>
-                    </div>
-                  </div>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept={uploadMethod === 'file' ? 'image/*,.pdf' : 'image/*'}
-                    capture={uploadMethod === 'camera' || uploadMethod === 'qr' ? 'environment' : undefined}
-                    onChange={handleFileSelect}
+          <CardContent className="pt-6">
+            <PageTabs
+              defaultTab="files"
+              tabs={[
+                {
+                  value: "files",
+                  label: "Upload Files",
+                  content: <FilesTab 
+                    selectedFile={selectedFile} 
+                    handleFileSelect={handleFileSelect}
+                    handleUpload={handleUpload}
+                    uploading={uploading}
+                    processing={processing}
+                    setSelectedFile={setSelectedFile}
                   />
-                </Label>
-              )}
-            </div>
-
-            {selectedFile && (
-              <Button 
-                onClick={handleUpload} 
-                disabled={uploading} 
-                className="w-full hover-scale"
-              >
-                {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {processing ? "Processing with AI..." : "Upload and Process"}
-              </Button>
-            )}
+                },
+                {
+                  value: "qr",
+                  label: "Scan QR",
+                  content: <QRTab 
+                    selectedFile={selectedFile}
+                    handleFileSelect={handleFileSelect}
+                    handleUpload={handleUpload}
+                    uploading={uploading}
+                    processing={processing}
+                    setSelectedFile={setSelectedFile}
+                  />
+                },
+                {
+                  value: "csv",
+                  label: "Import CSV",
+                  content: <CSVTab />
+                }
+              ]}
+            />
           </CardContent>
         </Card>
 

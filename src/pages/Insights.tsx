@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Loader2, Sparkles, TrendingUp, PieChart, Lightbulb } from "lucide-react";
 import { LineChart, Line, PieChart as RechartsPie, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageTabs from "@/components/PageTabs";
+import { AnalyticsTab, BudgetsTab, ForecastTab, ReportsTab, IndustryTab } from "./InsightsTabs";
 
 const Insights = () => {
   const navigate = useNavigate();
@@ -80,8 +82,43 @@ const Insights = () => {
           </Button>
         </div>
 
-        {/* Charts - Always visible */}
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 animate-fade-up">
+        <Card className="stat-card neon-border animate-fade-up">
+          <CardContent className="pt-6">
+            <PageTabs
+              defaultTab="analytics"
+              tabs={[
+                {
+                  value: "analytics",
+                  label: "Analytics",
+                  content: <AnalyticsTab />
+                },
+                {
+                  value: "budgets",
+                  label: "Budgets & Alerts",
+                  content: <BudgetsTab />
+                },
+                {
+                  value: "forecast",
+                  label: "Forecasting",
+                  content: <ForecastTab />
+                },
+                {
+                  value: "reports",
+                  label: "Reports",
+                  content: <ReportsTab />
+                },
+                {
+                  value: "industry",
+                  label: "Industry Packs",
+                  content: <IndustryTab />
+                }
+              ]}
+            />
+          </CardContent>
+        </Card>
+
+        {/* AI-Generated Insights Section (original functionality preserved) */}
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 animate-fade-up hidden">
           <Card className="gradient-card hover-glow">
             <CardHeader>
               <div className="flex items-center gap-2">

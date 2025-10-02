@@ -13,6 +13,24 @@ import {
   Calculator,
   Menu,
   Sparkles,
+  ChevronDown,
+  ChevronRight,
+  FileUp,
+  QrCode,
+  FileSpreadsheet,
+  Eye,
+  GitCompareArrows,
+  Users,
+  BarChart3,
+  DollarSign,
+  TrendingUpIcon,
+  FileBarChart,
+  Store,
+  User,
+  Building2,
+  Shield,
+  Plug,
+  Crown,
 } from "lucide-react";
 import FloatingChat from "@/components/FloatingChat";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -34,6 +52,7 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -47,11 +66,68 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
 
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
-    { icon: Upload, label: "Upload", path: "/upload" },
-    { icon: FileText, label: "Ledger", path: "/ledger" },
-    { icon: TrendingUp, label: "Insights", path: "/insights" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { 
+      icon: Upload, 
+      label: "Upload", 
+      path: "/upload",
+      subItems: [
+        { icon: FileUp, label: "Upload Files", tab: "files" },
+        { icon: QrCode, label: "Scan QR", tab: "qr" },
+        { icon: FileSpreadsheet, label: "Import CSV", tab: "csv" },
+      ]
+    },
+    { 
+      icon: FileText, 
+      label: "Ledger", 
+      path: "/ledger",
+      subItems: [
+        { icon: Eye, label: "All Transactions", tab: "all" },
+        { icon: FileText, label: "Needs Review", tab: "review" },
+        { icon: GitCompareArrows, label: "Reconciliation", tab: "reconcile" },
+        { icon: Users, label: "Vendors", tab: "vendors" },
+      ]
+    },
+    { 
+      icon: TrendingUp, 
+      label: "Insights", 
+      path: "/insights",
+      subItems: [
+        { icon: BarChart3, label: "Analytics", tab: "analytics" },
+        { icon: DollarSign, label: "Budgets & Alerts", tab: "budgets" },
+        { icon: TrendingUpIcon, label: "Forecasting", tab: "forecast" },
+        { icon: FileBarChart, label: "Reports", tab: "reports" },
+        { icon: Store, label: "Industry Packs", tab: "industry" },
+      ]
+    },
+    { 
+      icon: Settings, 
+      label: "Settings", 
+      path: "/settings",
+      subItems: [
+        { icon: User, label: "Profile", tab: "profile" },
+        { icon: Building2, label: "Business Type", tab: "business-type" },
+        { icon: Shield, label: "Team & Audit", tab: "audit" },
+        { icon: Plug, label: "Integrations", tab: "integrations" },
+        { icon: Crown, label: "Plan & Usage", tab: "plan" },
+      ]
+    },
   ];
+
+  const toggleGroup = (path: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(path) 
+        ? prev.filter(p => p !== path)
+        : [...prev, path]
+    );
+  };
+
+  const isGroupExpanded = (path: string) => expandedGroups.includes(path);
+
+  const isTabActive = (path: string, tab?: string) => {
+    const params = new URLSearchParams(window.location.search);
+    const currentTab = params.get('tab');
+    return location.pathname === path && (!tab || currentTab === tab);
+  };
 
   const SidebarContent = () => (
     <>
@@ -69,24 +145,58 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 md:p-4 space-y-1 md:space-y-2">
+      <nav className="flex-1 p-3 md:p-4 space-y-1 md:space-y-2 overflow-y-auto">
         {navItems.map((item) => (
-          <Button
-            key={item.path}
-            variant={location.pathname === item.path ? "secondary" : "ghost"}
-            className={`w-full justify-start text-sm md:text-base ${
-              location.pathname === item.path 
-                ? "bg-primary/20 text-primary hover:bg-primary/30" 
-                : "hover:bg-muted"
-            }`}
-            onClick={() => {
-              navigate(item.path);
-              setIsOpen(false);
-            }}
-          >
-            <item.icon className="mr-2 md:mr-3 h-4 w-4" />
-            {item.label}
-          </Button>
+          <div key={item.path}>
+            <Button
+              variant={location.pathname === item.path && !item.subItems ? "secondary" : "ghost"}
+              className={`w-full justify-start text-sm md:text-base ${
+                location.pathname === item.path 
+                  ? "bg-primary/20 text-primary hover:bg-primary/30" 
+                  : "hover:bg-muted"
+              }`}
+              onClick={() => {
+                if (item.subItems) {
+                  toggleGroup(item.path);
+                } else {
+                  navigate(item.path);
+                  setIsOpen(false);
+                }
+              }}
+            >
+              <item.icon className="mr-2 md:mr-3 h-4 w-4" />
+              {item.label}
+              {item.subItems && (
+                isGroupExpanded(item.path) ? 
+                  <ChevronDown className="ml-auto h-4 w-4" /> : 
+                  <ChevronRight className="ml-auto h-4 w-4" />
+              )}
+            </Button>
+            
+            {item.subItems && isGroupExpanded(item.path) && (
+              <div className="ml-4 mt-1 space-y-1">
+                {item.subItems.map((subItem) => (
+                  <Button
+                    key={subItem.tab}
+                    variant={isTabActive(item.path, subItem.tab) ? "secondary" : "ghost"}
+                    size="sm"
+                    className={`w-full justify-start text-xs md:text-sm ${
+                      isTabActive(item.path, subItem.tab)
+                        ? "bg-primary/10 text-primary" 
+                        : "hover:bg-muted"
+                    }`}
+                    onClick={() => {
+                      navigate(`${item.path}?tab=${subItem.tab}`);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <subItem.icon className="mr-2 h-3 w-3" />
+                    {subItem.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
         
         {/* AI Chat Button */}
