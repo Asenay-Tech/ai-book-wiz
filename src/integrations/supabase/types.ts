@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          id: string
+          payload_json: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          payload_json?: Json | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          payload_json?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bank_statements: {
         Row: {
           file_name: string
@@ -112,6 +139,30 @@ export type Database = {
         }
         Relationships: []
       }
+      channels: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_history: {
         Row: {
           content: string
@@ -143,6 +194,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      drivers: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       expense_analysis: {
         Row: {
@@ -187,6 +259,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      menu_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string
+          price: number | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          price?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pos_days: {
+        Row: {
+          comps: number
+          created_at: string
+          date: string
+          id: string
+          net_sales: number
+          user_id: string
+          voids: number
+        }
+        Insert: {
+          comps?: number
+          created_at?: string
+          date: string
+          id?: string
+          net_sales?: number
+          user_id: string
+          voids?: number
+        }
+        Update: {
+          comps?: number
+          created_at?: string
+          date?: string
+          id?: string
+          net_sales?: number
+          user_id?: string
+          voids?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -264,6 +393,54 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliations: {
+        Row: {
+          created_at: string
+          id: string
+          meta_json: Json | null
+          receipt_id: string | null
+          score: number | null
+          status: string
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_json?: Json | null
+          receipt_id?: string | null
+          score?: number | null
+          status: string
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_json?: Json | null
+          receipt_id?: string | null
+          score?: number | null
+          status?: string
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliations_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliations_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -348,6 +525,65 @@ export type Database = {
           id?: string
           report_name?: string
           report_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      routes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skus: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string
+          sku_code: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          sku_code: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          sku_code?: string
           user_id?: string
         }
         Relationships: []
@@ -466,6 +702,54 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
           workspace_id?: string | null
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          license_plate: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          license_plate?: string | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          license_plate?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          normalized_name: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          normalized_name?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          normalized_name?: string | null
+          user_id?: string
         }
         Relationships: []
       }
