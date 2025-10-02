@@ -57,30 +57,12 @@ serve(async (req) => {
       uploadsUsed: profile?.monthly_uploads_used || 0,
     };
 
-   // 🧠 Dynamic System Prompt — Adapts to Business Type
-const businessType = profile?.business_type || "small"; // Optional: add this to your Supabase profile table
-
-let tonePrompt = "";
-if (businessType === "personal") {
-  tonePrompt = `
-  You are a friendly AI financial assistant for individual users managing personal budgets.
-  Focus on simplicity, daily spending, savings goals, and practical advice.
-  Avoid heavy accounting jargon. Use examples like groceries, rent, and subscriptions.
-  `;
-} else if (businessType === "small") {
-  tonePrompt = `
+   // 🧠 Dynamic System Prompt — Friendly small business tone
+const tonePrompt = `
   You are a friendly and professional AI bookkeeping assistant for small businesses.
   Emphasize expense tracking, monthly summaries, and cash flow health.
   Provide insights to improve budgeting and reduce unnecessary expenses.
   `;
-} else {
-  tonePrompt = `
-  You are a professional AI financial analyst for medium-to-large businesses.
-  Use a data-driven and executive tone. Provide insights about trends, departmental expenses,
-  and operational efficiency. Include percentages and comparisons.
-  Avoid casual phrasing. Focus on decision-making and performance improvement.
-  `;
-}
 
 const systemPrompt = `
 ${tonePrompt}
