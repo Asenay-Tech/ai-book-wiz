@@ -115,43 +115,114 @@ export const AuditTab = () => (
   </Card>
 );
 
-export const IntegrationsTab = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Integrations</CardTitle>
-      <CardDescription>Connect to POS systems, marketplaces, and cloud storage</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="p-4 border rounded-lg">
-            <p className="font-semibold mb-1">Square POS</p>
-            <p className="text-xs text-muted-foreground mb-2">Import daily sales</p>
-            <Button size="sm" variant="outline">Connect</Button>
-          </div>
-          <div className="p-4 border rounded-lg">
-            <p className="font-semibold mb-1">Shopify</p>
-            <p className="text-xs text-muted-foreground mb-2">E-commerce orders</p>
-            <Button size="sm" variant="outline">Connect</Button>
-          </div>
-          <div className="p-4 border rounded-lg">
-            <p className="font-semibold mb-1">Google Drive</p>
-            <p className="text-xs text-muted-foreground mb-2">Auto-import receipts</p>
-            <Button size="sm" variant="outline">Connect</Button>
-          </div>
-          <div className="p-4 border rounded-lg">
-            <p className="font-semibold mb-1">Dropbox</p>
-            <p className="text-xs text-muted-foreground mb-2">Cloud storage sync</p>
-            <Button size="sm" variant="outline">Connect</Button>
-          </div>
-        </div>
+export const IntegrationsTab = () => {
+  const integrationCategories = [
+    {
+      title: "📚 Accounting Tools",
+      integrations: [
+        { name: "QuickBooks", description: "Auto-sync transactions & reports", icon: "💼", aiPowered: true },
+        { name: "Xero", description: "Real-time bookkeeping sync", icon: "📊", aiPowered: false },
+        { name: "Zoho Books", description: "Automated accounting workflows", icon: "📗", aiPowered: true },
+      ]
+    },
+    {
+      title: "🛒 POS Systems",
+      integrations: [
+        { name: "Square POS", description: "Auto-sync sales transactions", icon: "◼️", aiPowered: false },
+        { name: "Toast POS", description: "Restaurant sales & tips import", icon: "🍞", aiPowered: false },
+        { name: "Clover", description: "Retail & payment data sync", icon: "🍀", aiPowered: false },
+        { name: "Shopify", description: "E-commerce sales & inventory", icon: "🛍️", aiPowered: false },
+      ]
+    },
+    {
+      title: "💼 Payroll & HR",
+      integrations: [
+        { name: "Gusto", description: "Payroll & benefits integration", icon: "💰", aiPowered: false },
+        { name: "ADP", description: "Enterprise payroll sync", icon: "🏢", aiPowered: false },
+        { name: "Paychex", description: "HR & payroll automation", icon: "💵", aiPowered: false },
+      ]
+    },
+    {
+      title: "📂 Receipts & Cloud Storage",
+      integrations: [
+        { name: "Google Drive", description: "Auto-import receipts from folders", icon: "📁", aiPowered: true },
+        { name: "Dropbox", description: "Sync documents automatically", icon: "📦", aiPowered: false },
+        { name: "Gmail", description: "Auto-import receipts from inbox", icon: "📧", aiPowered: true },
+        { name: "Outlook", description: "Email receipt extraction", icon: "📨", aiPowered: false },
+      ]
+    },
+    {
+      title: "🏢 Business Ops / ERP",
+      integrations: [
+        { name: "SAP Business One", description: "Enterprise resource planning", icon: "🔷", aiPowered: false },
+        { name: "Oracle NetSuite", description: "Cloud ERP & financials", icon: "🔶", aiPowered: false },
+        { name: "Zoho Inventory", description: "Inventory & order management", icon: "📦", aiPowered: true },
+        { name: "Zoho CRM", description: "Customer relationship data", icon: "🤝", aiPowered: true },
+      ]
+    },
+    {
+      title: "📣 Owner Notifications",
+      integrations: [
+        { name: "WhatsApp Business", description: "Weekly insights & alerts", icon: "💬", aiPowered: false },
+        { name: "Slack", description: "Team notifications & updates", icon: "💼", aiPowered: false },
+        { name: "Email (SMTP)", description: "Custom email notifications", icon: "✉️", aiPowered: false },
+      ]
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-xl font-semibold mb-2">🧩 Integrations</h3>
         <p className="text-sm text-muted-foreground">
-          <strong>TODO:</strong> OAuth flows, CSV template mappings
+          Connect to your accounting tools, POS systems, cloud storage, payroll, and more — automate your workflow and gain full visibility.
         </p>
       </div>
-    </CardContent>
-  </Card>
-);
+
+      {integrationCategories.map((category, idx) => (
+        <div key={idx} className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+            <h4 className="text-base font-semibold text-foreground">
+              {category.title}
+            </h4>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {category.integrations.map((integration, intIdx) => (
+              <Card key={intIdx} className="hover-lift border-border/50">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">{integration.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h5 className="font-semibold text-sm">{integration.name}</h5>
+                          {integration.aiPowered && (
+                            <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5">
+                              🧠 AI
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {integration.description}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="flex-shrink-0 h-8">
+                      Connect
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export const PlanTab = ({ profile, plans }: any) => (
   <div className="space-y-4">
