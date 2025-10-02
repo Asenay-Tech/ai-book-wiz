@@ -49,6 +49,69 @@ export type Database = {
           },
         ]
       }
+      budget_alerts: {
+        Row: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          category: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budget_limits: {
+        Row: {
+          alert_threshold: number | null
+          category: string
+          created_at: string
+          id: string
+          monthly_limit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_threshold?: number | null
+          category: string
+          created_at?: string
+          id?: string
+          monthly_limit: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_threshold?: number | null
+          category?: string
+          created_at?: string
+          id?: string
+          monthly_limit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_history: {
         Row: {
           content: string
@@ -77,6 +140,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_analysis: {
+        Row: {
+          analysis_notes: string | null
+          confidence_score: number | null
+          created_at: string
+          id: string
+          is_duplicate: boolean | null
+          is_unusual: boolean | null
+          suggested_category: string | null
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_notes?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          is_duplicate?: boolean | null
+          is_unusual?: boolean | null
+          suggested_category?: string | null
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_notes?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          is_duplicate?: boolean | null
+          is_unusual?: boolean | null
+          suggested_category?: string | null
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_analysis_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -161,6 +268,123 @@ export type Database = {
           },
         ]
       }
+      recurring_expenses: {
+        Row: {
+          amount: number
+          category: string
+          confidence_score: number | null
+          created_at: string
+          frequency: string
+          id: string
+          is_confirmed: boolean | null
+          last_detected_date: string | null
+          next_expected_date: string | null
+          updated_at: string
+          user_id: string
+          vendor: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          confidence_score?: number | null
+          created_at?: string
+          frequency: string
+          id?: string
+          is_confirmed?: boolean | null
+          last_detected_date?: string | null
+          next_expected_date?: string | null
+          updated_at?: string
+          user_id: string
+          vendor: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          confidence_score?: number | null
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_confirmed?: boolean | null
+          last_detected_date?: string | null
+          next_expected_date?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          ai_insights: string | null
+          created_at: string
+          date_range_end: string | null
+          date_range_start: string | null
+          file_url: string | null
+          format: string | null
+          id: string
+          report_name: string
+          report_type: string
+          user_id: string
+        }
+        Insert: {
+          ai_insights?: string | null
+          created_at?: string
+          date_range_end?: string | null
+          date_range_start?: string | null
+          file_url?: string | null
+          format?: string | null
+          id?: string
+          report_name: string
+          report_type: string
+          user_id: string
+        }
+        Update: {
+          ai_insights?: string | null
+          created_at?: string
+          date_range_end?: string | null
+          date_range_start?: string | null
+          file_url?: string | null
+          format?: string | null
+          id?: string
+          report_name?: string
+          report_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          invited_at: string
+          member_email: string
+          member_user_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string | null
+          workspace_owner_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          member_email: string
+          member_user_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string | null
+          workspace_owner_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          member_email?: string
+          member_user_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string | null
+          workspace_owner_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -221,17 +445,54 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       reset_monthly_uploads: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
     Enums: {
+      alert_type:
+        | "budget_exceeded"
+        | "duplicate_expense"
+        | "unusual_expense"
+        | "recurring_detected"
+      app_role: "owner" | "admin" | "member" | "viewer"
       receipt_status: "pending" | "processed" | "error" | "matched"
       subscription_tier: "free" | "starter" | "pro" | "business"
       transaction_category:
@@ -375,6 +636,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alert_type: [
+        "budget_exceeded",
+        "duplicate_expense",
+        "unusual_expense",
+        "recurring_detected",
+      ],
+      app_role: ["owner", "admin", "member", "viewer"],
       receipt_status: ["pending", "processed", "error", "matched"],
       subscription_tier: ["free", "starter", "pro", "business"],
       transaction_category: [
