@@ -91,18 +91,18 @@ const Ledger = () => {
 
   return (
     <DashboardLayout user={user}>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center animate-fade-in">
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 animate-fade-in">
           <div>
-            <h1 className="text-3xl font-bold text-primary neon-glow">Transaction Ledger</h1>
-            <p className="text-muted-foreground">View and manage all your transactions</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-primary neon-glow">Transaction Ledger</h1>
+            <p className="text-sm md:text-base text-muted-foreground">View and manage all your transactions</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/upload")} className="hover-lift">
+            <Button variant="outline" onClick={() => navigate("/upload")} className="hover-lift text-sm md:text-base flex-1 md:flex-none">
               <Plus className="mr-2 h-4 w-4" />
-              Add Transaction
+              Add
             </Button>
-            <Button variant="outline" className="hover-lift">
+            <Button variant="outline" className="hover-lift text-sm md:text-base flex-1 md:flex-none">
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
@@ -111,9 +111,9 @@ const Ledger = () => {
 
         <Card className="stat-card neon-border animate-fade-up">
           <CardHeader>
-            <CardTitle>All Transactions</CardTitle>
+            <CardTitle className="text-lg md:text-xl">All Transactions</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             {loading ? (
               <div className="text-center text-muted-foreground py-8">
                 <div className="inline-block animate-pulse-glow">Loading transactions...</div>
@@ -128,54 +128,52 @@ const Ledger = () => {
                 </Button>
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-xs md:text-sm">Date</TableHead>
+                    <TableHead className="text-xs md:text-sm">Description</TableHead>
+                    <TableHead className="text-xs md:text-sm hidden sm:table-cell">Vendor</TableHead>
+                    <TableHead className="text-xs md:text-sm hidden md:table-cell">Category</TableHead>
+                    <TableHead className="text-xs md:text-sm">Amount</TableHead>
+                    <TableHead className="text-xs md:text-sm text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.map((transaction) => (
                     <TableRow key={transaction.id} className="hover:bg-secondary/50 transition-colors">
-                      <TableCell>
-                        {format(new Date(transaction.date), "MMM dd, yyyy")}
+                      <TableCell className="text-xs md:text-sm">
+                        {format(new Date(transaction.date), "MMM dd")}
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-xs md:text-sm">
                         {transaction.description}
                       </TableCell>
-                      <TableCell>{transaction.vendor || "-"}</TableCell>
-                      <TableCell>
-                        <Badge className={getCategoryColor(transaction.category)}>
+                      <TableCell className="hidden sm:table-cell text-xs md:text-sm">{transaction.vendor || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge className={`${getCategoryColor(transaction.category)} text-xs`}>
                           {transaction.category.replace(/_/g, " ")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-accent">
+                      <TableCell className="font-mono text-accent text-xs md:text-sm">
                         ${Number(transaction.amount).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1 md:gap-2">
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              /* View details */
-                            }}
-                            className="hover-lift"
+                            size="icon"
+                            className="hover-lift h-8 w-8 md:h-9 md:w-9"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3 w-3 md:h-4 md:w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => handleDelete(transaction.id)}
-                            className="hover-lift"
+                            className="hover-lift h-8 w-8 md:h-9 md:w-9"
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-3 w-3 md:h-4 md:w-4 text-destructive" />
                           </Button>
                         </div>
                       </TableCell>
@@ -183,6 +181,7 @@ const Ledger = () => {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Calculator, Upload, BarChart3, Brain, CheckCircle2, Sparkles, Receipt } from "lucide-react";
+import { Calculator, Upload, BarChart3, Brain, Sparkles, Receipt, FileText, MessageSquare, TrendingUp } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,11 +22,11 @@ const Index = () => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated floating receipts */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
-        <Receipt className="absolute top-20 left-10 w-16 h-16 animate-float text-primary" />
-        <Receipt className="absolute top-40 right-20 w-20 h-20 animate-float text-accent" style={{ animationDelay: "2s" }} />
-        <Receipt className="absolute bottom-32 left-1/4 w-12 h-12 animate-float text-primary" style={{ animationDelay: "4s" }} />
-        <BarChart3 className="absolute top-1/3 right-1/4 w-16 h-16 animate-float text-accent" style={{ animationDelay: "1s" }} />
-        <Calculator className="absolute bottom-20 right-10 w-14 h-14 animate-float text-primary" style={{ animationDelay: "3s" }} />
+        <Receipt className="absolute top-20 left-10 w-12 h-12 md:w-16 md:h-16 animate-float text-primary" />
+        <Receipt className="absolute top-40 right-20 w-16 h-16 md:w-20 md:h-20 animate-float text-accent" style={{ animationDelay: "2s" }} />
+        <Receipt className="absolute bottom-32 left-1/4 w-8 h-8 md:w-12 md:h-12 animate-float text-primary" style={{ animationDelay: "4s" }} />
+        <BarChart3 className="absolute top-1/3 right-1/4 w-12 h-12 md:w-16 md:h-16 animate-float text-accent" style={{ animationDelay: "1s" }} />
+        <Calculator className="absolute bottom-20 right-10 w-10 h-10 md:w-14 md:h-14 animate-float text-primary" style={{ animationDelay: "3s" }} />
       </div>
       
       {/* Grid pattern overlay */}
@@ -33,18 +34,27 @@ const Index = () => {
       
       {/* Navigation */}
       <nav className="relative z-10 border-b border-border backdrop-blur-xl glass-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="p-2 neon-border bg-primary/10 rounded-lg">
-              <Calculator className="h-6 w-6 text-primary animate-pulse-glow" />
+            <div className="p-1.5 md:p-2 neon-border bg-primary/10 rounded-lg">
+              <Calculator className="h-5 w-5 md:h-6 md:w-6 text-primary animate-pulse-glow" />
             </div>
-            <span className="text-xl font-bold text-foreground">AI Bookkeeper</span>
+            <span className="text-base md:text-xl font-bold text-foreground">AI Bookkeeper</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={() => navigate("/auth")} className="hover:bg-secondary">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/auth")} 
+              className="hover:bg-secondary text-sm md:text-base px-3 md:px-4 h-9 md:h-10"
+              size="sm"
+            >
               Sign In
             </Button>
-            <Button onClick={() => navigate("/auth")} className="bg-primary text-primary-foreground hover:bg-primary/90 hover-lift">
+            <Button 
+              onClick={() => navigate("/auth")} 
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover-lift text-sm md:text-base px-3 md:px-4 h-9 md:h-10"
+              size="sm"
+            >
               Get Started
             </Button>
           </div>
@@ -52,14 +62,14 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6 animate-pulse-glow">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm text-foreground">Automated AI Bookkeeping — Try It Free</span>
+          <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full glass-card mb-4 md:mb-6 animate-pulse-glow">
+            <Sparkles className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+            <span className="text-xs md:text-sm text-foreground">Automated AI Bookkeeping — Try It Free</span>
           </div>
           
-          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight animate-fade-up">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight animate-fade-up px-2">
             <span className="text-foreground">Asenay Tech</span>
             <br />
             <span className="text-primary neon-glow">
@@ -67,66 +77,66 @@ const Index = () => {
             </span>
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-up" style={{ animationDelay: "0.2s" }}>
+          <p className="text-sm sm:text-base md:text-xl text-muted-foreground mb-6 md:mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-up px-4" style={{ animationDelay: "0.2s" }}>
             Upload a receipt or CSV. Get categorized entries, dashboards, and AI-driven recommendations instantly.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-up" style={{ animationDelay: "0.4s" }}>
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center animate-fade-up px-4" style={{ animationDelay: "0.4s" }}>
             <Button 
               size="lg" 
               onClick={() => navigate("/auth")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 h-auto shadow-2xl hover-lift neon-border"
+              className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 text-sm md:text-lg px-6 md:px-8 py-4 md:py-6 h-auto shadow-2xl hover-lift neon-border"
             >
-              <Upload className="mr-2 h-5 w-5" />
+              <Upload className="mr-2 h-4 w-4 md:h-5 md:w-5" />
               Try it Free — No Sign-Up Required
             </Button>
           </div>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mt-20">
-          <div className="glass-card-hover p-8 rounded-2xl hover-lift animate-fade-up">
-            <div className="inline-flex p-4 neon-border bg-primary/10 rounded-xl mb-4">
-              <Upload className="h-8 w-8 text-primary" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-12 md:mt-20">
+          <div className="glass-card-hover p-6 md:p-8 rounded-2xl hover-lift animate-fade-up">
+            <div className="inline-flex p-3 md:p-4 neon-border bg-primary/10 rounded-xl mb-3 md:mb-4">
+              <Upload className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             </div>
-            <h3 className="text-2xl font-semibold mb-3 text-foreground">Smart OCR</h3>
-            <p className="text-muted-foreground leading-relaxed">
+            <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-foreground">Smart OCR</h3>
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
               Extract data from PDF receipts, images, and CSV files automatically with AI-powered recognition
             </p>
           </div>
 
-          <div className="glass-card-hover p-8 rounded-2xl hover-lift animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            <div className="inline-flex p-4 neon-border bg-accent/10 rounded-xl mb-4">
-              <BarChart3 className="h-8 w-8 text-accent" />
+          <div className="glass-card-hover p-6 md:p-8 rounded-2xl hover-lift animate-fade-up" style={{ animationDelay: "0.2s" }}>
+            <div className="inline-flex p-3 md:p-4 neon-border bg-accent/10 rounded-xl mb-3 md:mb-4">
+              <BarChart3 className="h-6 w-6 md:h-8 md:w-8 text-accent" />
             </div>
-            <h3 className="text-2xl font-semibold mb-3 text-foreground">Live Dashboards</h3>
-            <p className="text-muted-foreground leading-relaxed">
+            <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-foreground">Live Dashboards</h3>
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
               Real-time charts and KPIs updated with every upload. Track your spending at a glance.
             </p>
           </div>
 
-          <div className="glass-card-hover p-8 rounded-2xl hover-lift animate-fade-up" style={{ animationDelay: "0.4s" }}>
-            <div className="inline-flex p-4 neon-border bg-primary/10 rounded-xl mb-4">
-              <Brain className="h-8 w-8 text-primary" />
+          <div className="glass-card-hover p-6 md:p-8 rounded-2xl hover-lift animate-fade-up" style={{ animationDelay: "0.4s" }}>
+            <div className="inline-flex p-3 md:p-4 neon-border bg-primary/10 rounded-xl mb-3 md:mb-4">
+              <Brain className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             </div>
-            <h3 className="text-2xl font-semibold mb-3 text-foreground">AI Insights</h3>
-            <p className="text-muted-foreground leading-relaxed">
+            <h3 className="text-xl md:text-2xl font-semibold mb-2 md:mb-3 text-foreground">AI Insights</h3>
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
               Smart predictions, spending patterns, and personalized cost-saving recommendations
             </p>
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-32 text-center">
-          <div className="glass-card-hover p-12 rounded-3xl max-w-4xl mx-auto animate-scale-in neon-border">
-            <h2 className="text-4xl font-bold mb-4 text-foreground">Ready to Transform Your Bookkeeping?</h2>
-            <p className="text-xl text-muted-foreground mb-8">
+        <div className="mt-20 md:mt-32 text-center">
+          <div className="glass-card-hover p-8 md:p-12 rounded-3xl max-w-4xl mx-auto animate-scale-in neon-border">
+            <h2 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4 text-foreground">Ready to Transform Your Bookkeeping?</h2>
+            <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
               Start uploading receipts and let AI handle the rest. No credit card required.
             </p>
             <Button 
               size="lg" 
               onClick={() => navigate("/auth")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 h-auto shadow-2xl hover-lift"
+              className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 text-base md:text-lg px-6 md:px-8 py-4 md:py-6 h-auto shadow-2xl hover-lift"
             >
               Get Started Now
             </Button>
@@ -135,7 +145,7 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border backdrop-blur-sm py-8 text-center text-sm text-muted-foreground mt-20">
+      <footer className="relative z-10 border-t border-border backdrop-blur-sm py-6 md:py-8 text-center text-xs md:text-sm text-muted-foreground mt-12 md:mt-20">
         <p>© 2025 AI Bookkeeper. All rights reserved.</p>
       </footer>
     </div>

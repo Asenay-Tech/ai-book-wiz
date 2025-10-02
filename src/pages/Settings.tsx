@@ -93,10 +93,10 @@ const Settings = () => {
 
   return (
     <DashboardLayout user={user}>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account and subscription</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Manage your account and subscription</p>
         </div>
 
         <Card>
@@ -159,8 +159,8 @@ const Settings = () => {
         </Card>
 
         <div>
-          <h2 className="text-2xl font-bold mb-4">Upgrade Your Plan</h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Upgrade Your Plan</h2>
+          <div className="grid gap-3 md:gap-4 sm:grid-cols-2">
             {plans.map((plan) => (
               <Card key={plan.name} className={plan.name === profile?.subscription_tier ? "border-primary" : ""}>
                 <CardHeader>

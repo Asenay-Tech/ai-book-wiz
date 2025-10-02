@@ -94,13 +94,13 @@ const Chat = () => {
 
   return (
     <DashboardLayout user={user}>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">AI Assistant</h1>
-          <p className="text-muted-foreground">Ask questions about your finances and get AI-powered guidance</p>
+          <h1 className="text-2xl md:text-3xl font-bold">AI Assistant</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Ask questions about your finances and get AI-powered guidance</p>
         </div>
 
-        <Card className="h-[600px] flex flex-col">
+        <Card className="h-[500px] md:h-[600px] flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5" />

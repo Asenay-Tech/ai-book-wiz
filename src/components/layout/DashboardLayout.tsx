@@ -1,18 +1,25 @@
-import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Home,
   Upload,
-  FileSpreadsheet,
-  BarChart3,
+  FileText,
+  TrendingUp,
   MessageSquare,
   Settings,
   LogOut,
-  Calculator
+  Calculator,
+  Menu,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,6 +28,9 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -35,59 +45,101 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: Upload, label: "Upload", path: "/upload" },
-    { icon: FileSpreadsheet, label: "Ledger", path: "/ledger" },
-    { icon: BarChart3, label: "Insights", path: "/insights" },
+    { icon: FileText, label: "Ledger", path: "/ledger" },
+    { icon: TrendingUp, label: "Insights", path: "/insights" },
     { icon: MessageSquare, label: "AI Chat", path: "/chat" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
-  return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Grid overlay */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3lhbiIgc3Ryb2tlLW9wYWNpdHk9IjAuMDMiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
-      
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 border-r border-border glass-card p-4 flex flex-col z-50">
-        <div className="flex items-center gap-2 mb-8 animate-fade-in">
-          <div className="p-2 neon-border bg-primary/10 rounded-xl animate-pulse-glow">
-            <Calculator className="h-6 w-6 text-primary" />
+  const SidebarContent = () => (
+    <>
+      {/* Logo */}
+      <div className="p-4 md:p-6 border-b border-border">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+            <Calculator className="h-5 w-5 md:h-6 md:w-6 text-primary" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-primary">AI Bookkeeper</h2>
-            <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <h2 className="font-bold text-primary text-sm md:text-base">AI Bookkeeper</h2>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate max-w-[150px]">{user?.email}</p>
           </div>
         </div>
+      </div>
 
-        <nav className="flex-1 space-y-2">
-          {navItems.map((item, index) => (
-            <Button
-              key={item.path}
-              variant={location.pathname === item.path ? "default" : "ghost"}
-              className={`w-full justify-start hover-lift animate-fade-in ${
-                location.pathname === item.path ? 'bg-primary text-primary-foreground' : ''
-              }`}
-              onClick={() => navigate(item.path)}
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Button>
-          ))}
-        </nav>
+      {/* Navigation */}
+      <nav className="flex-1 p-3 md:p-4 space-y-1 md:space-y-2">
+        {navItems.map((item) => (
+          <Button
+            key={item.path}
+            variant={location.pathname === item.path ? "secondary" : "ghost"}
+            className={`w-full justify-start text-sm md:text-base ${
+              location.pathname === item.path 
+                ? "bg-primary/20 text-primary hover:bg-primary/30" 
+                : "hover:bg-muted"
+            }`}
+            onClick={() => {
+              navigate(item.path);
+              setIsOpen(false);
+            }}
+          >
+            <item.icon className="mr-2 md:mr-3 h-4 w-4" />
+            {item.label}
+          </Button>
+        ))}
+      </nav>
 
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-destructive hover:bg-destructive/10 hover-lift" 
+      {/* Sign Out */}
+      <div className="p-3 md:p-4 border-t border-border">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 text-sm md:text-base"
           onClick={handleSignOut}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="mr-2 md:mr-3 h-4 w-4" />
           Sign Out
         </Button>
-      </aside>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col md:flex-row w-full">
+      {/* Mobile Header with Hamburger */}
+      {isMobile && (
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-xl">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+                <Calculator className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="font-bold text-primary">AI Bookkeeper</h2>
+            </div>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="hover:bg-primary/10">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] p-0 bg-card/95 backdrop-blur-xl">
+                <div className="flex flex-col h-full">
+                  <SidebarContent />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </header>
+      )}
+
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <aside className="w-64 border-r border-border bg-card/50 backdrop-blur-xl flex flex-col">
+          <SidebarContent />
+        </aside>
+      )}
 
       {/* Main Content */}
-      <main className="ml-64 p-8 relative z-10">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 overflow-auto w-full">
+        <div className="container mx-auto p-4 md:p-6">
           {children}
         </div>
       </main>

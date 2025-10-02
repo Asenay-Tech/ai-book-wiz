@@ -96,21 +96,21 @@ const Upload = () => {
 
   return (
     <DashboardLayout user={user}>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Upload Receipt</h1>
-          <p className="text-muted-foreground">Upload and process receipts with AI-powered OCR</p>
+          <h1 className="text-2xl md:text-3xl font-bold gradient-text">Upload Receipt</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Upload and process receipts with AI-powered OCR</p>
         </div>
 
         {/* Upload Method Selector */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <Card 
             className={`cursor-pointer hover-scale hover-glow transition-all ${uploadMethod === 'file' ? 'ring-2 ring-primary' : ''}`}
             onClick={() => setUploadMethod('file')}
           >
-            <CardContent className="pt-6 pb-6 text-center">
-              <UploadIcon className={`h-8 w-8 mx-auto mb-2 ${uploadMethod === 'file' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-sm font-medium">File Upload</p>
+            <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6 text-center">
+              <UploadIcon className={`h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 ${uploadMethod === 'file' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className="text-xs md:text-sm font-medium">File Upload</p>
             </CardContent>
           </Card>
 
@@ -118,9 +118,9 @@ const Upload = () => {
             className={`cursor-pointer hover-scale hover-glow transition-all ${uploadMethod === 'camera' ? 'ring-2 ring-primary' : ''}`}
             onClick={() => setUploadMethod('camera')}
           >
-            <CardContent className="pt-6 pb-6 text-center">
-              <Camera className={`h-8 w-8 mx-auto mb-2 ${uploadMethod === 'camera' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-sm font-medium">Take Photo</p>
+            <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6 text-center">
+              <Camera className={`h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 ${uploadMethod === 'camera' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className="text-xs md:text-sm font-medium">Take Photo</p>
             </CardContent>
           </Card>
 
@@ -128,9 +128,9 @@ const Upload = () => {
             className={`cursor-pointer hover-scale hover-glow transition-all ${uploadMethod === 'qr' ? 'ring-2 ring-primary' : ''}`}
             onClick={() => setUploadMethod('qr')}
           >
-            <CardContent className="pt-6 pb-6 text-center">
-              <QrCode className={`h-8 w-8 mx-auto mb-2 ${uploadMethod === 'qr' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <p className="text-sm font-medium">Scan QR</p>
+            <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6 text-center">
+              <QrCode className={`h-6 w-6 md:h-8 md:w-8 mx-auto mb-1 md:mb-2 ${uploadMethod === 'qr' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <p className="text-xs md:text-sm font-medium">Scan QR</p>
             </CardContent>
           </Card>
         </div>

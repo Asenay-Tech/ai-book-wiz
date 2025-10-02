@@ -64,13 +64,13 @@ const Insights = () => {
 
   return (
     <DashboardLayout user={user}>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center animate-fade-in">
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 md:gap-0 animate-fade-in">
           <div>
-            <h1 className="text-3xl font-bold gradient-text">AI Insights</h1>
-            <p className="text-muted-foreground">Get personalized financial recommendations powered by AI</p>
+            <h1 className="text-2xl md:text-3xl font-bold gradient-text">AI Insights</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Get personalized financial recommendations powered by AI</p>
           </div>
-          <Button onClick={generateInsights} disabled={loading} className="hover-scale">
+          <Button onClick={generateInsights} disabled={loading} className="hover-scale w-full md:w-auto">
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -81,7 +81,7 @@ const Insights = () => {
         </div>
 
         {/* Charts - Always visible */}
-        <div className="grid gap-6 md:grid-cols-2 animate-fade-up">
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 animate-fade-up">
           <Card className="gradient-card hover-glow">
             <CardHeader>
               <div className="flex items-center gap-2">
