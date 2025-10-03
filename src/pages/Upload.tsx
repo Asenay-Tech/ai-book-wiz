@@ -49,24 +49,21 @@ const Upload = () => {
     setUploading(true);
 
     try {
-      // Upload to storage
       const bucket = isCsv ? 'statements' : 'receipts';
       const fileName = `${user.id}/${Date.now()}-${selectedFile.name}`;
+      
+      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, selectedFile);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-
       setUploading(false);
       setProcessing(true);
 
       if (isCsv) {
-        // CSV import flow
+        // CSV import flow - call import-statement function
         const { data, error: functionError } = await supabase.functions.invoke('import-statement', {
           body: {
             userId: user.id,
@@ -75,7 +72,10 @@ const Upload = () => {
           }
         });
 
-        if (functionError) throw functionError;
+        if (functionError) {
+          console.error('Import function error:', functionError);
+          throw functionError;
+        }
 
         const totals = data.totals;
         toast.success(
@@ -89,11 +89,16 @@ const Upload = () => {
           }
         );
 
+        setSelectedFile(null);
         setTimeout(() => {
           navigate('/ledger');
         }, 2000);
       } else {
         // Receipt processing flow
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fileName);
+
         const { data: receipt, error: insertError } = await supabase
           .from("receipts")
           .insert({
@@ -142,10 +147,9 @@ const Upload = () => {
         if (txError) throw txError;
 
         toast.success("Receipt uploaded and processed successfully!");
+        setSelectedFile(null);
         navigate("/ledger");
       }
-
-      setSelectedFile(null);
     } catch (error: any) {
       toast.error(error.message || "Failed to upload");
     } finally {
