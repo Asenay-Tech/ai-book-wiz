@@ -54,7 +54,10 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(() => {
+    const saved = localStorage.getItem('sidebar-expanded-groups');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -129,11 +132,13 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   ];
 
   const toggleGroup = (path: string) => {
-    setExpandedGroups(prev => 
-      prev.includes(path) 
+    setExpandedGroups(prev => {
+      const newGroups = prev.includes(path) 
         ? prev.filter(p => p !== path)
-        : [...prev, path]
-    );
+        : [...prev, path];
+      localStorage.setItem('sidebar-expanded-groups', JSON.stringify(newGroups));
+      return newGroups;
+    });
   };
 
   const isGroupExpanded = (path: string) => expandedGroups.includes(path);
@@ -160,72 +165,113 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 md:p-4 space-y-1 md:space-y-2 overflow-y-auto">
-        {navItems.map((item) => (
-          <div key={item.path}>
-            <Button
-              variant={location.pathname === item.path && !item.subItems ? "secondary" : "ghost"}
-              className={`w-full justify-start text-sm md:text-base ${
-                location.pathname === item.path 
-                  ? "bg-primary/20 text-primary hover:bg-primary/30" 
-                  : "hover:bg-muted"
-              }`}
-              onClick={() => {
-                if (item.subItems) {
-                  toggleGroup(item.path);
-                } else {
-                  navigate(item.path);
-                  setIsOpen(false);
-                }
-              }}
-            >
-              <item.icon className="mr-2 md:mr-3 h-4 w-4" />
-              {item.label}
-              {item.subItems && (
-                isGroupExpanded(item.path) ? 
-                  <ChevronDown className="ml-auto h-4 w-4" /> : 
-                  <ChevronRight className="ml-auto h-4 w-4" />
-              )}
-            </Button>
-            
-            {item.subItems && isGroupExpanded(item.path) && (
-              <div className="ml-4 mt-1 space-y-1">
-                {item.subItems.map((subItem) => (
-                  <Button
-                    key={subItem.tab}
-                    variant={isTabActive(item.path, subItem.tab) ? "secondary" : "ghost"}
-                    size="sm"
-                    className={`w-full justify-start text-xs md:text-sm ${
-                      isTabActive(item.path, subItem.tab)
-                        ? "bg-primary/10 text-primary" 
-                        : "hover:bg-muted"
-                    }`}
-                    onClick={() => {
-                      navigate(`${item.path}?tab=${subItem.tab}`);
+      <nav className="flex-1 p-3 md:p-4 space-y-2 overflow-y-auto">
+        {navItems.map((item) => {
+          const isParentActive = location.pathname === item.path;
+          const hasActiveChild = item.subItems?.some(sub => isTabActive(item.path, sub.tab));
+          
+          return (
+            <div key={item.path} className="mt-2 first:mt-0">
+              <button
+                className={`
+                  relative w-full h-11 px-3 rounded-xl flex items-center gap-2
+                  font-medium text-foreground/90 transition-all duration-200
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 focus-visible:ring-offset-0
+                  ${isParentActive || hasActiveChild
+                    ? 'bg-white/10 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-400 before:absolute before:left-0 before:h-5/6 before:w-0.5 before:rounded-full before:bg-sky-400/80'
+                    : 'hover:bg-white/5 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400'
+                  }
+                `}
+                onClick={(e) => {
+                  if (item.subItems) {
+                    toggleGroup(item.path);
+                    // Allow navigation on parent click
+                    if (!e.ctrlKey && !e.metaKey) {
+                      navigate(item.path);
                       setIsOpen(false);
+                    }
+                  } else {
+                    navigate(item.path);
+                    setIsOpen(false);
+                  }
+                }}
+                aria-expanded={item.subItems ? isGroupExpanded(item.path) : undefined}
+                aria-current={isParentActive ? 'page' : undefined}
+              >
+                <item.icon className={`h-4 w-4 ${isParentActive || hasActiveChild ? 'text-sky-400' : ''}`} />
+                <span className={`flex-1 text-left ${isParentActive || hasActiveChild ? '' : 'text-foreground/90'}`}>
+                  {item.label}
+                </span>
+                {item.subItems && (
+                  <button
+                    className="p-1 hover:bg-white/10 rounded-md transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroup(item.path);
                     }}
+                    aria-label={isGroupExpanded(item.path) ? "Collapse" : "Expand"}
                   >
-                    <subItem.icon className="mr-2 h-3 w-3" />
-                    {subItem.label}
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                    {isGroupExpanded(item.path) ? 
+                      <ChevronDown className="h-4 w-4" /> : 
+                      <ChevronRight className="h-4 w-4" />
+                    }
+                  </button>
+                )}
+              </button>
+              
+              {item.subItems && isGroupExpanded(item.path) && (
+                <div className="mt-1 space-y-1">
+                  {item.subItems.map((subItem) => {
+                    const isActive = isTabActive(item.path, subItem.tab);
+                    return (
+                      <button
+                        key={subItem.tab}
+                        className={`
+                          relative w-full h-10 pl-8 pr-3 rounded-lg flex items-center gap-2
+                          font-normal text-foreground/70 transition-all duration-200
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 focus-visible:ring-offset-0
+                          ${isActive
+                            ? 'bg-white/10 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-400 before:absolute before:left-0 before:h-5/6 before:w-0.5 before:rounded-full before:bg-sky-400/80'
+                            : 'hover:bg-white/5 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400'
+                          }
+                        `}
+                        onClick={() => {
+                          navigate(`${item.path}?tab=${subItem.tab}`);
+                          setIsOpen(false);
+                        }}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        <subItem.icon className={`h-3.5 w-3.5 transition-opacity ${isActive ? 'opacity-100 text-sky-400' : 'opacity-70 group-hover:opacity-100'}`} />
+                        <span className={`text-sm ${isActive ? '' : 'text-foreground/70'}`}>
+                          {subItem.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
         
         {/* AI Chat Button */}
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-sm md:text-base hover:bg-muted"
-          onClick={() => {
-            setIsChatOpen(true);
-            setIsOpen(false);
-          }}
-        >
-          <MessageSquare className="mr-2 md:mr-3 h-4 w-4" />
-          AI Chat
-        </Button>
+        <div className="mt-2">
+          <button
+            className="
+              relative w-full h-11 px-3 rounded-xl flex items-center gap-2
+              font-medium text-foreground/90 transition-all duration-200
+              hover:bg-white/5 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-sky-400 hover:via-indigo-400 hover:to-fuchsia-400
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 focus-visible:ring-offset-0
+            "
+            onClick={() => {
+              setIsChatOpen(true);
+              setIsOpen(false);
+            }}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span className="flex-1 text-left text-foreground/90">AI Chat</span>
+          </button>
+        </div>
       </nav>
 
       {/* Sign Out */}
