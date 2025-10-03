@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          id: string
+          institution: string | null
+          last4: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          institution?: string | null
+          last4?: string | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          institution?: string | null
+          last4?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bank_statements: {
         Row: {
           file_name: string
@@ -259,6 +289,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      import_batches: {
+        Row: {
+          file_path: string | null
+          finished_at: string | null
+          id: string
+          meta_json: Json | null
+          rows_imported: number | null
+          rows_total: number | null
+          source: string
+          started_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          file_path?: string | null
+          finished_at?: string | null
+          id?: string
+          meta_json?: Json | null
+          rows_imported?: number | null
+          rows_total?: number | null
+          source: string
+          started_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          file_path?: string | null
+          finished_at?: string | null
+          id?: string
+          meta_json?: Json | null
+          rows_imported?: number | null
+          rows_total?: number | null
+          source?: string
+          started_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       menu_items: {
         Row: {
@@ -588,6 +657,51 @@ export type Database = {
         }
         Relationships: []
       }
+      statements: {
+        Row: {
+          bank_account_id: string | null
+          batch_id: string | null
+          created_at: string | null
+          file_path: string | null
+          id: string
+          statement_period: unknown | null
+          user_id: string
+        }
+        Insert: {
+          bank_account_id?: string | null
+          batch_id?: string | null
+          created_at?: string | null
+          file_path?: string | null
+          id?: string
+          statement_period?: unknown | null
+          user_id: string
+        }
+        Update: {
+          bank_account_id?: string | null
+          batch_id?: string | null
+          created_at?: string | null
+          file_path?: string | null
+          id?: string
+          statement_period?: unknown | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statements_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statements_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           accepted_at: string | null
@@ -625,46 +739,77 @@ export type Database = {
         Row: {
           amount: number
           category: Database["public"]["Enums"]["transaction_category"]
+          confidence: number | null
           created_at: string
           date: string
           description: string
+          external_id: string | null
           id: string
+          import_batch_id: string | null
           is_reconciled: boolean
+          memo: string | null
+          meta_json: Json | null
+          needs_review: boolean | null
           notes: string | null
           receipt_id: string | null
+          source: string | null
           updated_at: string
           user_id: string
           vendor: string | null
+          vendor_id: string | null
         }
         Insert: {
           amount: number
           category: Database["public"]["Enums"]["transaction_category"]
+          confidence?: number | null
           created_at?: string
           date: string
           description: string
+          external_id?: string | null
           id?: string
+          import_batch_id?: string | null
           is_reconciled?: boolean
+          memo?: string | null
+          meta_json?: Json | null
+          needs_review?: boolean | null
           notes?: string | null
           receipt_id?: string | null
+          source?: string | null
           updated_at?: string
           user_id: string
           vendor?: string | null
+          vendor_id?: string | null
         }
         Update: {
           amount?: number
           category?: Database["public"]["Enums"]["transaction_category"]
+          confidence?: number | null
           created_at?: string
           date?: string
           description?: string
+          external_id?: string | null
           id?: string
+          import_batch_id?: string | null
           is_reconciled?: boolean
+          memo?: string | null
+          meta_json?: Json | null
+          needs_review?: boolean | null
           notes?: string | null
           receipt_id?: string | null
+          source?: string | null
           updated_at?: string
           user_id?: string
           vendor?: string | null
+          vendor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_receipt_id_fkey"
             columns: ["receipt_id"]
@@ -677,6 +822,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]

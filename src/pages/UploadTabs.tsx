@@ -114,20 +114,29 @@ export const QRTab = ({ handleFileSelect, selectedFile, handleUpload, uploading,
   </div>
 );
 
-export const CSVTab = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Import CSV</CardTitle>
-      <CardDescription>Upload bank statements or transaction exports</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center bg-primary/5">
+export const CSVTab = ({ selectedFile, handleFileSelect, handleUpload, uploading, processing, setSelectedFile }: any) => (
+  <div className="space-y-4">
+    <div className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center bg-primary/5">
+      {selectedFile ? (
+        <div className="space-y-4 animate-scale-in">
+          <FileSpreadsheet className="h-16 w-16 mx-auto text-primary animate-pulse-glow" />
+          <div>
+            <p className="font-medium">{selectedFile.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {(selectedFile.size / 1024).toFixed(2)} KB
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => setSelectedFile(null)} className="hover-scale">
+            Change File
+          </Button>
+        </div>
+      ) : (
         <Label htmlFor="csv-upload" className="cursor-pointer">
           <div className="space-y-4">
             <FileSpreadsheet className="h-16 w-16 mx-auto text-muted-foreground" />
             <div>
               <p className="text-lg font-medium">Click to upload CSV</p>
-              <p className="text-sm text-muted-foreground mt-2">Bank statements, POS exports, etc.</p>
+              <p className="text-sm text-muted-foreground mt-2">Bank statements, transaction exports</p>
             </div>
           </div>
           <Input
@@ -135,15 +144,34 @@ export const CSVTab = () => (
             type="file"
             className="hidden"
             accept=".csv"
+            onChange={handleFileSelect}
           />
         </Label>
-      </div>
-      <div className="text-sm text-muted-foreground space-y-2">
-        <p><strong>TODO:</strong> Column mapping wizard</p>
-        <p>• Map columns to fields (Date, Description, Amount, etc.)</p>
-        <p>• Preview data before import</p>
-        <p>• Duplicate detection</p>
-      </div>
-    </CardContent>
-  </Card>
+      )}
+    </div>
+
+    {selectedFile && (
+      <Button 
+        onClick={handleUpload} 
+        disabled={uploading || processing} 
+        className="w-full hover-scale"
+      >
+        {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {processing ? "Processing & Categorizing..." : "Import & Process"}
+      </Button>
+    )}
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Smart Import Features</CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground space-y-2">
+        <p>✓ Auto-categorization with AI</p>
+        <p>✓ Duplicate detection</p>
+        <p>✓ Vendor normalization</p>
+        <p>✓ Automatic reconciliation</p>
+        <p>✓ Cash flow forecasting</p>
+      </CardContent>
+    </Card>
+  </div>
 );

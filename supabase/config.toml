@@ -1,5 +1,8 @@
 project_id = "qykxikvizhzeqdsbcapt"
 
+[functions.import-statement]
+verify_jwt = false
+
 [functions.process-receipt]
 verify_jwt = false
 

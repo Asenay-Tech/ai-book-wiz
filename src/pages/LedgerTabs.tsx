@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Trash2, Check, X, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AllTransactionsTab = ({ transactions, loading, handleDelete, getCategoryColor, navigate }: any) => (
   <>
@@ -74,44 +77,105 @@ export const AllTransactionsTab = ({ transactions, loading, handleDelete, getCat
   </>
 );
 
-export const NeedsReviewTab = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Needs Review</CardTitle>
-      <CardDescription>Transactions requiring manual verification or category assignment</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        <div className="p-4 border border-warning/30 rounded-lg bg-warning/5">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning mt-1 flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-semibold">Office Depot - $450.00</p>
-                  <p className="text-sm text-muted-foreground">Dec 15, 2024</p>
-                  <p className="text-sm mt-1">AI Category: <span className="text-primary">Office Supplies</span> (Confidence: 65%)</p>
-                  <p className="text-xs text-muted-foreground mt-1">Why: Amount significantly higher than usual for this category</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="hover:bg-success/10 hover:text-success">
-                    <Check className="h-4 w-4 mr-1" /> Accept
-                  </Button>
-                  <Button size="sm" variant="outline" className="hover:bg-destructive/10 hover:text-destructive">
-                    <X className="h-4 w-4 mr-1" /> Reassign
-                  </Button>
+export const NeedsReviewTab = () => {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadNeedsReview();
+  }, []);
+
+  const loadNeedsReview = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .or('needs_review.eq.true,confidence.lt.0.7')
+      .order('date', { ascending: false });
+
+    if (!error && data) {
+      setTransactions(data);
+    }
+    setLoading(false);
+  };
+
+  const handleAccept = async (id: string, category: any) => {
+    const { error } = await supabase
+      .from('transactions')
+      .update({ category: category as any, needs_review: false, confidence: 1.0 })
+      .eq('id', id);
+
+    if (!error) {
+      toast.success('Transaction accepted');
+      loadNeedsReview();
+    } else {
+      toast.error('Failed to update transaction');
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Needs Review ({transactions.length})</CardTitle>
+        <CardDescription>Transactions requiring manual verification or category assignment</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {transactions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Check className="h-12 w-12 mx-auto mb-2 text-success" />
+            <p>All transactions are categorized!</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {transactions.map((tx) => (
+              <div key={tx.id} className="p-4 border border-warning/30 rounded-lg bg-warning/5">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-warning mt-1 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <p className="font-semibold">{tx.memo || tx.description} - ${tx.amount.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">{format(new Date(tx.date), 'MMM dd, yyyy')}</p>
+                        {tx.meta_json?.suggestions && (
+                          <p className="text-sm mt-1">
+                            Suggestions: {tx.meta_json.suggestions.slice(0, 3).join(', ')}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Confidence: {((tx.confidence || 0) * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        {tx.meta_json?.suggestions?.[0] && (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="hover:bg-success/10 hover:text-success"
+                            onClick={() => handleAccept(tx.id, tx.meta_json.suggestions[0])}
+                          >
+                            <Check className="h-4 w-4 mr-1" /> Accept
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline">
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
-        <p className="text-sm text-muted-foreground text-center py-4">
-          <strong>TODO:</strong> Load actual transactions with confidence &lt; 0.7 from database
-        </p>
-      </div>
-    </CardContent>
-  </Card>
-);
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export const ReconcileTab = () => (
   <Card>
