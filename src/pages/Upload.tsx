@@ -108,7 +108,7 @@ const Upload = () => {
 
         if (insertError) throw insertError;
 
-        const { error: processError } = await supabase.functions.invoke(
+        const { data: processData, error: processError } = await supabase.functions.invoke(
           "process-receipt",
           {
             body: { receiptId: receipt.id, fileUrl: publicUrl }
@@ -116,6 +116,30 @@ const Upload = () => {
         );
 
         if (processError) throw processError;
+
+        // Create transaction from processed receipt data
+        const { error: txError } = await supabase
+          .from("transactions")
+          .insert({
+            user_id: user.id,
+            receipt_id: receipt.id,
+            date: processData.date,
+            amount: processData.total,
+            description: processData.merchant,
+            vendor: processData.merchant,
+            category: processData.category,
+            source: 'receipt',
+            needs_review: processData.needs_review,
+            confidence: processData.confidence,
+            meta_json: {
+              tax: processData.tax,
+              currency: processData.currency,
+              flags: processData.flags,
+              explanation: processData.explanation
+            }
+          });
+
+        if (txError) throw txError;
 
         toast.success("Receipt uploaded and processed successfully!");
         navigate("/ledger");
