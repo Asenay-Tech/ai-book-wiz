@@ -310,6 +310,11 @@ serve(async (req) => {
         kind = "bank";
         const csvText = uint8ToText(bytes);
         const txs = parseCsvStatement(csvText);
+        // Load user rules for categorization
+        const { data: rules } = await supabaseAdmin
+          .from('rules')
+          .select('pattern, category_id')
+          .eq('user_id', userId);
         const rows = await Promise.all(
           txs.map(async (tx) => ({
             user_id: userId,
@@ -321,6 +326,14 @@ serve(async (req) => {
             source: "bank",
             // Default to 'other' to satisfy NOT NULL constraint in some schemas
             category: 'other',
+            category_id: (() => {
+              const norm = normalizeWhitespace(tx.description).toUpperCase();
+              for (const r of rules || []) {
+                const pat = String(r.pattern || '').toUpperCase();
+                if (pat && norm.includes(pat)) return r.category_id || null;
+              }
+              return null;
+            })(),
             currency: null,
             confidence: null,
             raw: tx.raw ?? null,
@@ -328,15 +341,15 @@ serve(async (req) => {
             hash: await computeTxHash(userId, tx.posted_at, tx.description, tx.amount, "bank"),
           }))
         );
-        const { data } = await supabaseAdmin
-          .from("transactions")
-          .upsert(rows, { onConflict: "hash", ignoreDuplicates: true, returning: "representation" });
-        inserted = data?.length ?? 0;
-        skipped = rows.length - inserted;
+        ({ inserted, updated, skipped } = await upsertWithCounts(supabaseAdmin, userId, rows, docRow.id));
       } else if (isOfx) {
         kind = "bank";
         const text = uint8ToText(bytes);
         const txs = parseOfxQfx(text);
+        const { data: rules } = await supabaseAdmin
+          .from('rules')
+          .select('pattern, category_id')
+          .eq('user_id', userId);
         const rows = await Promise.all(
           txs.map(async (tx) => ({
             user_id: userId,
@@ -347,6 +360,14 @@ serve(async (req) => {
             vendor: tx.vendor ?? null,
             source: "bank",
             category: 'other',
+            category_id: (() => {
+              const norm = normalizeWhitespace(tx.description).toUpperCase();
+              for (const r of rules || []) {
+                const pat = String(r.pattern || '').toUpperCase();
+                if (pat && norm.includes(pat)) return r.category_id || null;
+              }
+              return null;
+            })(),
             currency: null,
             confidence: null,
             raw: tx.raw ?? null,
@@ -354,51 +375,54 @@ serve(async (req) => {
             hash: await computeTxHash(userId, tx.posted_at, tx.description, tx.amount, "bank"),
           }))
         );
-        const { data } = await supabaseAdmin
-          .from("transactions")
-          .upsert(rows, { onConflict: "hash", ignoreDuplicates: true, returning: "representation" });
-        inserted = data?.length ?? 0;
-        skipped = rows.length - inserted;
+        ({ inserted, updated, skipped } = await upsertWithCounts(supabaseAdmin, userId, rows, docRow.id));
       } else if (isPdf) {
-        // Heuristics would require PDF text extraction; provide helpful message
-        throw new Error("PDF text extraction not configured. Export CSV from bank or upload image for OCR.");
-      } else if (isImage) {
-        // OCR stub
-        try {
-          const text = await performOcrStub(bytes);
-          const tx = parseReceiptTextStub(text);
-          kind = "receipt";
-          const row = {
+        // Try PDF text extraction via pdfjs; if no parsed transactions, require OCR
+        const parsed = await parsePdfBank(bytes);
+        if ((parsed?.length || 0) >= 1) {
+          kind = 'bank';
+          const { data: rules } = await supabaseAdmin
+            .from('rules')
+            .select('pattern, category_id')
+            .eq('user_id', userId);
+          const rows = await Promise.all(parsed.map(async (tx) => ({
             user_id: userId,
             posted_at: tx.posted_at,
             date: new Date(tx.posted_at).toISOString().slice(0,10),
             description: tx.description,
             amount: tx.amount,
             vendor: tx.vendor ?? null,
-            source: "receipt" as const,
+            source: 'bank' as const,
             category: 'other',
+            category_id: (() => {
+              const norm = normalizeWhitespace(tx.description).toUpperCase();
+              for (const r of rules || []) {
+                const pat = String(r.pattern || '').toUpperCase();
+                if (pat && norm.includes(pat)) return r.category_id || null;
+              }
+              return null;
+            })(),
             currency: null,
             confidence: null,
             raw: tx.raw ?? null,
             document_id: docRow.id,
-            hash: await computeTxHash(userId, tx.posted_at, tx.description, tx.amount, "receipt"),
-          };
-          const { data } = await supabaseAdmin
-            .from("transactions")
-            .upsert([row], { onConflict: "hash", ignoreDuplicates: true, returning: "representation" });
-          inserted = data?.length ?? 0;
-          skipped = 1 - inserted;
-        } catch (e) {
-          // OCR missing
+            hash: await computeTxHash(userId, tx.posted_at, tx.description, tx.amount, 'bank'),
+          })));
+          ({ inserted, updated, skipped } = await upsertWithCounts(supabaseAdmin, userId, rows, docRow.id));
+        } else {
           await supabaseAdmin
-            .from("documents")
-            .update({ parse_status: "error", parse_message: String(e), kind: "receipt" })
-            .eq("id", docRow.id);
-          return new Response(
-            JSON.stringify({ kind: "receipt", inserted: 0, updated: 0, skipped: 0, error: String(e) }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
-          );
+            .from('documents')
+            .update({ parse_status: 'error', parse_message: 'OCR required', kind: 'receipt' })
+            .eq('id', docRow.id);
+          return new Response(JSON.stringify({ error: 'OCR required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
+      } else if (isImage) {
+        // OCR is required for images; not configured -> return 400
+        await supabaseAdmin
+          .from("documents")
+          .update({ parse_status: "error", parse_message: 'OCR required', kind: "receipt" })
+          .eq("id", docRow.id);
+        return new Response(JSON.stringify({ error: 'OCR required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } else {
         throw new Error(`Unsupported file type: ${mimeType || "unknown"}`);
       }
@@ -408,10 +432,7 @@ serve(async (req) => {
         .update({ parse_status: "parsed", kind })
         .eq("id", docRow.id);
 
-      return new Response(
-        JSON.stringify({ kind, inserted, updated, skipped }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ kind, inserted, updated, skipped }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     } catch (e) {
       await supabaseAdmin
         .from("documents")
@@ -430,3 +451,82 @@ serve(async (req) => {
     });
   }
 });
+
+async function parsePdfBank(fileContent: Uint8Array): Promise<any[]> {
+  const pdfjsLib = await import('https://esm.sh/pdfjs-dist@4.6.82/build/pdf.mjs');
+  const loadingTask = pdfjsLib.getDocument({ data: fileContent });
+  const pdf = await loadingTask.promise;
+  let fullText = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const strings = content.items.map((it: any) => it.str);
+    fullText += strings.join(' ') + '\n';
+  }
+  const text = fullText.replace(/\s+/g, ' ').trim();
+  const txs: any[] = [];
+  const re = /(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{8})\s+(.+?)\s+([\-\(\)]?\$?\d{1,3}(?:[\.,]\d{3})*(?:[\.,]\d{2}))/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const dateRaw = m[1];
+    const desc = m[2].trim();
+    const amountRaw = m[3];
+    const posted_at = parseDateLoose(dateRaw);
+    const amount = parseAmount(amountRaw);
+    if (!amount || isNaN(amount)) continue;
+    if (/^total$/i.test(desc)) continue;
+    txs.push({
+      posted_at,
+      description: desc,
+      amount,
+      vendor: extractVendor(desc),
+      source: 'bank',
+      raw: { date: dateRaw, description: desc, amount: amountRaw },
+    });
+  }
+  return txs;
+}
+
+async function upsertWithCounts(supabaseAdmin: any, userId: string, rows: any[], documentId: string) {
+  const hashes = rows.map((r) => r.hash);
+  const { data: existing } = await supabaseAdmin
+    .from('transactions')
+    .select('id, hash, document_id')
+    .eq('user_id', userId)
+    .in('hash', hashes);
+
+  const byHash = new Map((existing || []).map((e: any) => [e.hash, e]));
+  const toUpdateIds: string[] = [];
+  let existingCount = 0;
+  for (const h of hashes) {
+    const ex = byHash.get(h);
+    if (ex) {
+      existingCount++;
+      if (!ex.document_id) toUpdateIds.push(ex.id);
+    }
+  }
+
+  const newRows = rows.filter((r) => !byHash.has(r.hash));
+  let inserted = 0;
+  if (newRows.length) {
+    const { data: insData, error: insErr } = await supabaseAdmin
+      .from('transactions')
+      .upsert(newRows, { onConflict: 'hash', ignoreDuplicates: false, returning: 'representation' });
+    if (insErr) throw insErr;
+    inserted = insData?.length ?? 0;
+  }
+
+  let updated = 0;
+  if (toUpdateIds.length) {
+    const { data: updData, error: updErr } = await supabaseAdmin
+      .from('transactions')
+      .update({ document_id: documentId })
+      .in('id', toUpdateIds)
+      .select('id');
+    if (updErr) throw updErr;
+    updated = updData?.length ?? 0;
+  }
+
+  const skipped = existingCount - updated;
+  return { inserted, updated, skipped };
+}

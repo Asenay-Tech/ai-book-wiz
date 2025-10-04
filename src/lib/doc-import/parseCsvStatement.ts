@@ -1,18 +1,27 @@
-export function parseCsvStatement(csvText: string) {
+export type NormalizedTransaction = {
+  posted_at: string;
+  description: string;
+  amount: number;
+  vendor: string | null;
+  source: 'bank';
+  raw: Record<string, string>;
+};
+
+export function parseCsvStatement(csvText: string): NormalizedTransaction[] {
   const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (lines.length < 2) return [] as any[];
+  if (lines.length < 2) return [];
   const delimiter = detectDelimiter(lines[0]);
   const headers = parseCsvRow(lines[0], delimiter);
   const map: Record<string,string> = {};
   for (const h of headers) {
     const lower = h.toLowerCase();
-    if (!map.date && /(date|posted|posting|transaction date|trans date)/.test(lower)) map.date = h;
-    if (!map.description && /(description|memo|details|payee|merchant)/.test(lower)) map.description = h;
+    if (!map.date && /(date|posted|posting|transaction\s*date|trans\s*date|valuta|buchungstag)/.test(lower)) map.date = h;
+    if (!map.description && /(description|memo|details|payee|merchant|narrative|text|beschreibung)/.test(lower)) map.description = h;
     if (!map.amount && /^amount$|transaction amount/.test(lower)) map.amount = h;
-    if (!map.debit && /(debit|withdrawals)/.test(lower)) map.debit = h;
-    if (!map.credit && /(credit|deposits)/.test(lower)) map.credit = h;
+    if (!map.debit && /(debit|withdrawals|lastschrift|soll)/.test(lower)) map.debit = h;
+    if (!map.credit && /(credit|deposits|gutschrift|haben)/.test(lower)) map.credit = h;
   }
-  const txs: any[] = [];
+  const txs: NormalizedTransaction[] = [];
   for (let i = 1; i < lines.length; i++) {
     const row = parseCsvRow(lines[i], delimiter);
     const rowData: Record<string,string> = {};
@@ -26,7 +35,8 @@ export function parseCsvStatement(csvText: string) {
       amount = parseAmount(rowData[map.amount]);
     }
     if (!amount || isNaN(amount)) continue;
-    const description = rowData[map.description] || "Unknown Transaction";
+    const description = rowData[map.description] || rowData['Description'] || "Unknown Transaction";
+    if (/^total$/i.test(description)) continue;
     const posted_at = parseDateLoose(dateStr);
     txs.push({
       posted_at,
@@ -34,7 +44,7 @@ export function parseCsvStatement(csvText: string) {
       amount,
       vendor: extractVendor(description),
       source: "bank" as const,
-      raw: rowData,
+      raw: rowData as Record<string, string>,
     });
   }
   return txs;
