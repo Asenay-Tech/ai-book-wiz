@@ -45,46 +45,59 @@ const Upload = () => {
     if (!selectedFile || !user) return;
 
     const isCsv = selectedFile.name.endsWith('.csv') || selectedFile.type.includes('csv');
+    const isPdf = selectedFile.name.endsWith('.pdf') || selectedFile.type === 'application/pdf';
     
     setUploading(true);
 
     try {
-      const bucket = isCsv ? 'statements' : 'receipts';
-      const fileName = `${user.id}/${Date.now()}-${selectedFile.name}`;
-      
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, selectedFile);
+      // For CSV/PDF bank statements, send file content directly to edge function
+      if (isCsv || isPdf) {
+        setUploading(false);
+        setProcessing(true);
 
-      if (uploadError) throw uploadError;
+        // Convert file to base64
+        const fileBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.readAsDataURL(selectedFile);
+        });
 
-      setUploading(false);
-      setProcessing(true);
-
-      if (isCsv) {
-        // CSV import flow - call import-statement function
+        console.log('Calling import-statement function...');
         const { data, error: functionError } = await supabase.functions.invoke('import-statement', {
           body: {
-            userId: user.id,
-            filePath: fileName,
-            currency: 'USD'
+            fileName: selectedFile.name,
+            mimeType: selectedFile.type,
+            fileBase64
           }
         });
 
         if (functionError) {
           console.error('Import function error:', functionError);
-          throw functionError;
+          throw new Error(functionError.message || 'Failed to import statement');
         }
 
-        const totals = data.totals;
+        console.log('Import result:', data);
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        const { inserted, skipped, errors } = data;
+        
+        if (errors && errors.length > 0) {
+          console.error('Import errors:', errors);
+        }
+
         toast.success(
-          `Imported ${totals.inserted}/${totals.read} transactions! ${totals.auto_categorized} auto-categorized, ${totals.needs_review} need review.`,
+          `Imported ${inserted} new transactions! ${skipped} duplicates skipped.`,
           {
-            duration: 8000,
+            duration: 6000,
             action: {
               label: 'View Ledger',
-              onClick: () => navigate('/ledger?tab=review')
+              onClick: () => navigate('/ledger?tab=all')
             }
           }
         );
@@ -92,9 +105,21 @@ const Upload = () => {
         setSelectedFile(null);
         setTimeout(() => {
           navigate('/ledger');
-        }, 2000);
+        }, 1500);
       } else {
         // Receipt processing flow
+        const bucket = 'receipts';
+        const fileName = `${user.id}/${Date.now()}-${selectedFile.name}`;
+        
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        setUploading(false);
+        setProcessing(true);
         const { data: { publicUrl } } = supabase.storage
           .from(bucket)
           .getPublicUrl(fileName);

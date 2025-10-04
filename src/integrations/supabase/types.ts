@@ -630,6 +630,30 @@ export type Database = {
           },
         ]
       }
+      rules: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          pattern: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          pattern: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          pattern?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       skus: {
         Row: {
           category: string | null
@@ -744,6 +768,7 @@ export type Database = {
           date: string
           description: string
           external_id: string | null
+          hash: string | null
           id: string
           import_batch_id: string | null
           is_reconciled: boolean
@@ -751,6 +776,7 @@ export type Database = {
           meta_json: Json | null
           needs_review: boolean | null
           notes: string | null
+          posted_at: string | null
           receipt_id: string | null
           source: string | null
           updated_at: string
@@ -766,6 +792,7 @@ export type Database = {
           date: string
           description: string
           external_id?: string | null
+          hash?: string | null
           id?: string
           import_batch_id?: string | null
           is_reconciled?: boolean
@@ -773,6 +800,7 @@ export type Database = {
           meta_json?: Json | null
           needs_review?: boolean | null
           notes?: string | null
+          posted_at?: string | null
           receipt_id?: string | null
           source?: string | null
           updated_at?: string
@@ -788,6 +816,7 @@ export type Database = {
           date?: string
           description?: string
           external_id?: string | null
+          hash?: string | null
           id?: string
           import_batch_id?: string | null
           is_reconciled?: boolean
@@ -795,6 +824,7 @@ export type Database = {
           meta_json?: Json | null
           needs_review?: boolean | null
           notes?: string | null
+          posted_at?: string | null
           receipt_id?: string | null
           source?: string | null
           updated_at?: string

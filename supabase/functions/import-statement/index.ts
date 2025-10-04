@@ -7,249 +7,172 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-/**
- * Import CSV bank statement and auto-categorize transactions
- * 
- * Example curl:
- * curl -X POST https://YOUR_PROJECT.supabase.co/functions/v1/import-statement \
- *   -H "Authorization: Bearer YOUR_TOKEN" \
- *   -H "Content-Type: application/json" \
- *   -d '{"userId":"uuid","filePath":"statements/userId/file.csv","currency":"USD"}'
- */
+// SHA-256 hash function
+async function sha256(str: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('=== Import Statement Function Started ===');
   const startTime = Date.now();
   
   try {
-    const { userId, bankAccountId, filePath, mapping, dateFormat, currency = 'USD', delimiter } = await req.json();
+    const body = await req.json();
+    const { fileName, mimeType, fileBase64 } = body;
     
-    if (!userId || !filePath) {
+    console.log(`Processing: ${fileName}, type: ${mimeType}`);
+    
+    if (!fileName || !fileBase64) {
       return new Response(
-        JSON.stringify({ error: 'userId and filePath are required' }),
+        JSON.stringify({ error: 'fileName and fileBase64 are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Get user from auth header
+    const authHeader = req.headers.get('Authorization');
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader! } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = user.id;
+    console.log(`User ID: ${userId}`);
+
+    // Decode base64 file content
+    const fileContent = Uint8Array.from(atob(fileBase64), c => c.charCodeAt(0));
+    
+    // Determine file type and parse
+    let transactions: any[];
+    
+    if (mimeType === 'text/csv' || fileName.endsWith('.csv')) {
+      console.log('Parsing CSV...');
+      const csvText = new TextDecoder().decode(fileContent);
+      transactions = await parseCsvBank(csvText);
+    } else if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      return new Response(
+        JSON.stringify({ error: 'PDF parsing not yet implemented. Please use CSV format.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({ error: `Unsupported file type: ${mimeType}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Parsed ${transactions.length} transactions`);
+    
+    // Use service role for inserts
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    // Create import batch
-    const { data: batch, error: batchError } = await supabase
-      .from('import_batches')
-      .insert({
-        user_id: userId,
-        source: 'csv_upload',
-        file_path: filePath,
-        status: 'processing'
-      })
-      .select()
-      .single();
-
-    if (batchError) throw batchError;
-
-    // Download CSV file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('statements')
-      .download(filePath.replace('statements/', ''));
-
-    if (downloadError) throw downloadError;
-
-    const csvText = await fileData.text();
-    const lines = csvText.split('\n').filter(l => l.trim());
     
-    if (lines.length < 2) {
-      throw new Error('CSV file is empty or has no data rows');
-    }
+    // Check for existing user rules
+    const { data: userRules } = await supabase
+      .from('rules')
+      .select('pattern, category')
+      .eq('user_id', userId);
 
-    // Detect delimiter
-    const detectedDelimiter = delimiter || detectDelimiter(lines[0]);
-    const headers = lines[0].split(detectedDelimiter).map(h => h.trim().replace(/['"]/g, ''));
-    
-    // Auto-detect column mapping if not provided
-    const columnMapping = mapping || autoDetectMapping(headers);
-    
-    if (!columnMapping.date || !columnMapping.amount) {
-      throw new Error('Could not detect date and amount columns. Please provide manual mapping.');
-    }
-
-    console.log(`Processing ${lines.length - 1} rows with mapping:`, columnMapping);
+    const rules = userRules || [];
 
     const results = {
-      read: lines.length - 1,
       inserted: 0,
-      skipped_duplicates: 0,
-      auto_categorized: 0,
-      needs_review: 0,
-      bad_rows: [] as Array<{ line: number; reason: string; data?: any }>
+      updated: 0,
+      skipped: 0,
+      errors: [] as string[]
     };
 
-    // Process each row
-    for (let i = 1; i < lines.length; i++) {
+    // Process each transaction
+    for (const tx of transactions) {
       try {
-        const row = parseCsvRow(lines[i], detectedDelimiter);
-        if (row.length < headers.length) continue;
+        const normalizedDesc = tx.description.toUpperCase().replace(/\s+/g, ' ').trim();
+        
+        // Generate hash for deduplication
+        const hashInput = `${userId}|${tx.posted_at}|${normalizedDesc}|${tx.amount.toFixed(2)}`;
+        const hash = await sha256(hashInput);
 
-        const rowData: any = {};
-        headers.forEach((header, idx) => {
-          rowData[header] = row[idx]?.trim();
-        });
-
-        // Extract transaction data
-        const dateStr = rowData[columnMapping.date];
-        const amountStr = rowData[columnMapping.amount] || 
-                         (columnMapping.credit && columnMapping.debit 
-                           ? (parseFloat(rowData[columnMapping.credit] || '0') - parseFloat(rowData[columnMapping.debit] || '0')).toString()
-                           : null);
-        const description = rowData[columnMapping.description] || '';
-        const externalId = rowData[columnMapping.external_id] || 
-                          `${userId}-${hashString(`${dateStr}|${amountStr}|${description}|${currency}`)}`;
-
-        if (!dateStr || !amountStr) continue;
-
-        const date = parseDate(dateStr, dateFormat);
-        const amount = parseFloat(amountStr);
-
-        if (isNaN(amount)) {
-          results.bad_rows.push({ line: i + 1, reason: 'Invalid amount', data: rowData });
-          continue;
-        }
-
-        // Check for duplicates
+        // Check if transaction exists
         const { data: existing } = await supabase
           .from('transactions')
           .select('id')
-          .eq('user_id', userId)
-          .eq('external_id', externalId)
+          .eq('hash', hash)
           .maybeSingle();
 
         if (existing) {
-          results.skipped_duplicates++;
+          results.skipped++;
           continue;
         }
 
-        // Normalize vendor
-        const vendorName = extractVendor(description);
-        let vendorId = null;
+        // Apply categorization rules
+        let category = null;
+        let confidence = null;
         
-        if (vendorName) {
-          const { data: vendor } = await supabase
-            .from('vendors')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('normalized_name', vendorName.toLowerCase())
-            .maybeSingle();
-
-          if (vendor) {
-            vendorId = vendor.id;
-          } else {
-            const { data: newVendor } = await supabase
-              .from('vendors')
-              .insert({
-                user_id: userId,
-                name: vendorName,
-                normalized_name: vendorName.toLowerCase()
-              })
-              .select()
-              .single();
-            if (newVendor) vendorId = newVendor.id;
+        for (const rule of rules) {
+          if (normalizedDesc.includes(rule.pattern.toUpperCase())) {
+            category = rule.category;
+            confidence = 1.0;
+            break;
           }
         }
-
-        // Auto-categorize using AI
-        const categorization = await categorizeTransaction(description, amount);
-        const needsReview = categorization.confidence < 0.9;
 
         // Insert transaction
         const { error: insertError } = await supabase
           .from('transactions')
           .insert({
             user_id: userId,
-            date,
-            amount,
-            description: description.substring(0, 500),
-            memo: description,
-            currency,
+            posted_at: tx.posted_at,
+            date: new Date(tx.posted_at).toISOString().split('T')[0],
+            description: tx.description,
+            amount: tx.amount,
+            vendor: tx.vendor || null,
+            category: category as any,
             source: 'bank',
-            external_id: externalId,
-            import_batch_id: batch.id,
-            vendor_id: vendorId,
-            category: needsReview ? null : categorization.category,
-            confidence: categorization.confidence,
-            needs_review: needsReview,
-            meta_json: needsReview ? { suggestions: categorization.suggestions } : null
+            confidence: confidence,
+            needs_review: category === null,
+            hash: hash,
+            meta_json: tx.raw || null
           });
 
         if (insertError) {
           console.error('Insert error:', insertError);
-          results.bad_rows.push({ line: i + 1, reason: insertError.message, data: rowData });
+          results.errors.push(`${tx.description}: ${insertError.message}`);
           continue;
         }
 
         results.inserted++;
-        if (needsReview) {
-          results.needs_review++;
-        } else {
-          results.auto_categorized++;
-        }
-
-      } catch (rowError) {
-        console.error(`Error processing row ${i}:`, rowError);
-        const errorMessage = rowError instanceof Error ? rowError.message : 'Unknown error';
-        results.bad_rows.push({ line: i + 1, reason: errorMessage });
+      } catch (txError) {
+        console.error('Transaction processing error:', txError);
+        results.errors.push(txError instanceof Error ? txError.message : 'Unknown error');
       }
     }
 
-    const finishedAt = new Date().toISOString();
-
-    // Update batch status
-    await supabase
-      .from('import_batches')
-      .update({
-        status: 'completed',
-        rows_total: results.read,
-        rows_imported: results.inserted,
-        finished_at: finishedAt,
-        meta_json: { bad_rows: results.bad_rows }
-      })
-      .eq('id', batch.id);
-
-    // Trigger reconciliation in background (non-blocking)
-    try {
-      await supabase.functions.invoke('reconcile-banks', {
-        body: { userId, commit: false }
-      });
-    } catch (e) {
-      console.log('Reconciliation trigger failed (non-critical):', e);
-    }
-
-    // Trigger insights refresh in background (non-blocking)
-    try {
-      await supabase.functions.invoke('generate-insights', {
-        body: { userId }
-      });
-    } catch (e) {
-      console.log('Insights refresh failed (non-critical):', e);
-    }
+    console.log(`=== Results: ${results.inserted} inserted, ${results.skipped} skipped, ${results.errors.length} errors ===`);
 
     return new Response(
-      JSON.stringify({
-        batchId: batch.id,
-        totals: results,
-        started_at: batch.started_at,
-        finished_at: finishedAt,
-        duration_ms: Date.now() - startTime
-      }),
+      JSON.stringify(results),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Import error:', error);
+    console.error('=== Import Error ===', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
@@ -258,75 +181,199 @@ serve(async (req) => {
   }
 });
 
-// Helper functions
+// Parse CSV bank statement
+async function parseCsvBank(csvText: string): Promise<any[]> {
+  const lines = csvText.split('\n').filter(l => l.trim());
+  
+  if (lines.length < 2) {
+    throw new Error('CSV file is empty or has no data rows');
+  }
+
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = parseCsvRow(lines[0], delimiter).map(h => h.trim());
+  
+  console.log(`CSV headers: ${headers.join(', ')}`);
+  
+  const mapping = autoDetectMapping(headers);
+  console.log('Column mapping:', mapping);
+  
+  if (!mapping.date || (!mapping.amount && !mapping.debit && !mapping.credit)) {
+    throw new Error('Could not detect required columns (date and amount/debit/credit)');
+  }
+
+  const transactions: any[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const row = parseCsvRow(lines[i], delimiter);
+      if (row.length < 2) continue; // Skip empty rows
+
+      const rowData: any = {};
+      headers.forEach((header, idx) => {
+        rowData[header] = row[idx]?.trim() || '';
+      });
+
+      const dateStr = rowData[mapping.date];
+      if (!dateStr) continue;
+
+      // Parse amount (handle debit/credit columns or single amount column)
+      let amount = 0;
+      if (mapping.debit && mapping.credit) {
+        const debit = parseAmount(rowData[mapping.debit]);
+        const credit = parseAmount(rowData[mapping.credit]);
+        amount = credit - debit; // Credit is positive, debit is negative
+      } else if (mapping.amount) {
+        amount = parseAmount(rowData[mapping.amount]);
+      }
+
+      if (isNaN(amount) || amount === 0) continue;
+
+      const description = rowData[mapping.description] || 'Unknown Transaction';
+      const posted_at = parseDate(dateStr);
+
+      transactions.push({
+        posted_at,
+        description,
+        amount,
+        vendor: extractVendor(description),
+        source: 'bank',
+        raw: rowData
+      });
+    } catch (rowError) {
+      console.error(`Error parsing row ${i}:`, rowError);
+    }
+  }
+
+  return transactions;
+}
+
 function detectDelimiter(line: string): string {
-  const delimiters = [',', ';', '\t'];
-  const counts = delimiters.map(d => line.split(d).length);
-  const maxIdx = counts.indexOf(Math.max(...counts));
-  return delimiters[maxIdx];
+  const delimiters = [',', ';', '\t', '|'];
+  let maxCount = 0;
+  let bestDelimiter = ',';
+  
+  for (const d of delimiters) {
+    const count = line.split(d).length;
+    if (count > maxCount) {
+      maxCount = count;
+      bestDelimiter = d;
+    }
+  }
+  
+  return bestDelimiter;
 }
 
 function autoDetectMapping(headers: string[]): any {
   const mapping: any = {};
   
-  headers.forEach((h, idx) => {
+  for (const h of headers) {
     const lower = h.toLowerCase();
-    if (['date', 'posted', 'transaction date', 'posting date'].some(k => lower.includes(k))) {
+    
+    if (['date', 'posted', 'transaction date', 'posting date', 'trans date'].some(k => lower.includes(k))) {
       mapping.date = h;
     }
-    if (['amount', 'transaction amount'].some(k => lower === k)) {
+    if (['amount', 'transaction amount'].some(k => lower === k.replace(/\s+/g, ' '))) {
       mapping.amount = h;
     }
-    if (lower.includes('debit')) mapping.debit = h;
-    if (lower.includes('credit')) mapping.credit = h;
-    if (['description', 'memo', 'details', 'payee'].some(k => lower.includes(k))) {
+    if (lower.includes('debit') || lower === 'withdrawals') {
+      mapping.debit = h;
+    }
+    if (lower.includes('credit') || lower === 'deposits') {
+      mapping.credit = h;
+    }
+    if (['description', 'memo', 'details', 'payee', 'merchant'].some(k => lower.includes(k))) {
       mapping.description = h;
     }
-    if (['balance', 'running balance'].some(k => lower.includes(k))) {
-      mapping.balance = h;
-    }
-    if (['id', 'fitid', 'transaction id', 'reference'].some(k => lower.includes(k))) {
-      mapping.external_id = h;
-    }
-  });
+  }
 
   return mapping;
 }
 
 function parseCsvRow(line: string, delimiter: string): string[] {
-  const result = [];
+  const result: string[] = [];
   let current = '';
   let inQuotes = false;
   
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+    const nextChar = line[i + 1];
+    
     if (char === '"') {
-      inQuotes = !inQuotes;
+      if (inQuotes && nextChar === '"') {
+        current += '"'; // Escaped quote
+        i++; // Skip next char
+      } else {
+        inQuotes = !inQuotes;
+      }
     } else if (char === delimiter && !inQuotes) {
-      result.push(current);
+      result.push(current.trim());
       current = '';
     } else {
       current += char;
     }
   }
-  result.push(current);
+  result.push(current.trim());
   
-  return result.map(s => s.replace(/^"|"$/g, ''));
+  return result.map(s => s.replace(/^["']|["']$/g, ''));
 }
 
-function parseDate(dateStr: string, format?: string): string {
-  // Try ISO format first
-  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-    return dateStr.split('T')[0];
+function parseAmount(amountStr: string): number {
+  if (!amountStr) return 0;
+  
+  // Remove currency symbols, spaces, and handle parentheses (negative)
+  let cleaned = amountStr.replace(/[$€£¥\s]/g, '');
+  
+  const isNegative = cleaned.includes('(') || cleaned.includes(')') || cleaned.startsWith('-');
+  cleaned = cleaned.replace(/[()]/g, '').replace('-', '');
+  
+  // Handle European format (comma as decimal separator)
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+    // e.g., 1.234,56 -> remove thousand separator
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (cleaned.includes(',') && !cleaned.includes('.')) {
+    // Could be European or thousands separator
+    const parts = cleaned.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // Likely decimal: 123,45
+      cleaned = cleaned.replace(',', '.');
+    } else {
+      // Likely thousands: 1,234
+      cleaned = cleaned.replace(/,/g, '');
+    }
   }
   
-  // Try MM/DD/YYYY or DD/MM/YYYY
-  const parts = dateStr.split(/[\/\-\.]/);
-  if (parts.length === 3) {
-    const [a, b, c] = parts;
-    // Assume MM/DD/YYYY if no format specified
-    if (c.length === 4) {
-      return `${c}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`;
+  const amount = parseFloat(cleaned);
+  return isNegative ? -Math.abs(amount) : amount;
+}
+
+function parseDate(dateStr: string): string {
+  // Try ISO format
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    return new Date(dateStr).toISOString();
+  }
+  
+  // Try various formats
+  const patterns = [
+    /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/,  // MM/DD/YYYY or DD/MM/YYYY
+    /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/,  // YYYY/MM/DD
+  ];
+  
+  for (const pattern of patterns) {
+    const match = dateStr.match(pattern);
+    if (match) {
+      const [_, a, b, c] = match;
+      
+      // Try MM/DD/YYYY (US format)
+      const usDate = new Date(`${a}/${b}/${c}`);
+      if (!isNaN(usDate.getTime()) && parseInt(a) <= 12) {
+        return usDate.toISOString();
+      }
+      
+      // Try DD/MM/YYYY (European format)
+      const euDate = new Date(`${b}/${a}/${c}`);
+      if (!isNaN(euDate.getTime())) {
+        return euDate.toISOString();
+      }
     }
   }
   
