@@ -66,10 +66,8 @@ serve(async (req) => {
       const csvText = new TextDecoder().decode(fileContent);
       transactions = await parseCsvBank(csvText);
     } else if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      return new Response(
-        JSON.stringify({ error: 'PDF parsing not yet implemented. Please use CSV format.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('Parsing PDF...');
+      transactions = await parsePdfBank(fileContent);
     } else {
       return new Response(
         JSON.stringify({ error: `Unsupported file type: ${mimeType}` }),
@@ -180,6 +178,20 @@ serve(async (req) => {
     );
   }
 });
+
+// Parse PDF bank statement  
+async function parsePdfBank(fileContent: Uint8Array): Promise<any[]> {
+  // For now, provide helpful error with instructions to export CSV
+  throw new Error(
+    'PDF bank statements require text extraction. Please export your bank statement as CSV:\n\n' +
+    '1. Log into your online banking\n' +
+    '2. Go to account statements/transactions\n' +
+    '3. Select date range (e.g., last month)\n' +
+    '4. Export/Download as CSV format\n' +
+    '5. Upload the CSV file here\n\n' +
+    'Most banks support CSV export in the transaction history section.'
+  );
+}
 
 // Parse CSV bank statement
 async function parseCsvBank(csvText: string): Promise<any[]> {
