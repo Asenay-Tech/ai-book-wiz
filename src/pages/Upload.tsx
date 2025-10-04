@@ -32,9 +32,13 @@ const Upload = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 'text/csv', 'application/vnd.ms-excel'];
-      if (!validTypes.includes(file.type) && !file.name.endsWith('.csv')) {
-        toast.error("Please upload an image (JPG, PNG), PDF, or CSV file");
+      const name = file.name.toLowerCase();
+      const isCsv = name.endsWith('.csv');
+      const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
+      const isOfx = name.endsWith('.ofx') || name.endsWith('.qfx');
+      const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|webp|heic)$/.test(name);
+      if (!(isCsv || isPdf || isOfx || isImage)) {
+        toast.error("Supported: CSV/OFX/QFX, PDF, or image (JPG/PNG/WEBP/HEIC)");
         return;
       }
       setSelectedFile(file);
@@ -44,14 +48,16 @@ const Upload = () => {
   const handleUpload = async () => {
     if (!selectedFile || !user) return;
 
-    const isCsv = selectedFile.name.endsWith('.csv') || selectedFile.type.includes('csv');
-    const isPdf = selectedFile.name.endsWith('.pdf') || selectedFile.type === 'application/pdf';
+    const lowerName = selectedFile.name.toLowerCase();
+    const isCsv = lowerName.endsWith('.csv') || selectedFile.type.includes('csv');
+    const isOfx = lowerName.endsWith('.ofx') || lowerName.endsWith('.qfx');
+    const isPdf = lowerName.endsWith('.pdf') || selectedFile.type === 'application/pdf';
     
     setUploading(true);
 
     try {
       // For CSV/PDF bank statements, send file content directly to edge function
-      if (isCsv || isPdf) {
+      if (isCsv || isPdf || isOfx) {
         setUploading(false);
         setProcessing(true);
 
@@ -65,8 +71,8 @@ const Upload = () => {
           reader.readAsDataURL(selectedFile);
         });
 
-        console.log('Calling import-statement function...');
-        const { data, error: functionError } = await supabase.functions.invoke('import-statement', {
+        console.log('Calling import-document function...');
+        const { data, error: functionError } = await supabase.functions.invoke('import-document', {
           body: {
             fileName: selectedFile.name,
             mimeType: selectedFile.type,
@@ -85,14 +91,12 @@ const Upload = () => {
           throw new Error(data.error);
         }
 
-        const { inserted, skipped, errors } = data;
+        const { inserted, updated, skipped, error } = data;
         
-        if (errors && errors.length > 0) {
-          console.error('Import errors:', errors);
-        }
+        if (error) throw new Error(error);
 
         toast.success(
-          `Imported ${inserted} new transactions! ${skipped} duplicates skipped.`,
+          `Imported ${inserted} new, ${updated || 0} updated, ${skipped} skipped.`,
           {
             duration: 6000,
             action: {
@@ -107,73 +111,34 @@ const Upload = () => {
           navigate('/ledger');
         }, 1500);
       } else {
-        // Receipt processing flow
-        const bucket = 'receipts';
-        const fileName = `${user.id}/${Date.now()}-${selectedFile.name}`;
-        
-        // Upload to storage
-        const { error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, selectedFile);
-
-        if (uploadError) throw uploadError;
-
+        // Images/PDF receipts: also use import-document so server does OCR or stub
         setUploading(false);
         setProcessing(true);
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(fileName);
 
-        const { data: receipt, error: insertError } = await supabase
-          .from("receipts")
-          .insert({
-            user_id: user.id,
-            file_name: selectedFile.name,
-            file_url: publicUrl,
-            file_type: selectedFile.type,
-            status: 'pending'
-          })
-          .select()
-          .single();
+        const fileBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.readAsDataURL(selectedFile);
+        });
 
-        if (insertError) throw insertError;
-
-        const { data: processData, error: processError } = await supabase.functions.invoke(
-          "process-receipt",
-          {
-            body: { receiptId: receipt.id, fileUrl: publicUrl }
+        const { data, error: functionError } = await supabase.functions.invoke('import-document', {
+          body: {
+            fileName: selectedFile.name,
+            mimeType: selectedFile.type,
+            fileBase64
           }
-        );
+        });
 
-        if (processError) throw processError;
+        if (functionError) throw new Error(functionError.message || 'Failed to process document');
+        if (data.error) throw new Error(data.error);
 
-        // Create transaction from processed receipt data
-        const { error: txError } = await supabase
-          .from("transactions")
-          .insert({
-            user_id: user.id,
-            receipt_id: receipt.id,
-            date: processData.date,
-            amount: processData.total,
-            description: processData.merchant,
-            vendor: processData.merchant,
-            category: processData.category,
-            source: 'receipt',
-            needs_review: processData.needs_review,
-            confidence: processData.confidence,
-            meta_json: {
-              tax: processData.tax,
-              currency: processData.currency,
-              flags: processData.flags,
-              explanation: processData.explanation
-            }
-          });
-
-        if (txError) throw txError;
-
-        toast.success("Receipt uploaded and processed successfully!");
+        const { inserted, updated, skipped } = data;
+        toast.success(`Imported ${inserted} new, ${updated || 0} updated, ${skipped} skipped.`);
         setSelectedFile(null);
-        navigate("/ledger");
+        navigate('/ledger');
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to upload");

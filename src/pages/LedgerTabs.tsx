@@ -66,6 +66,7 @@ export const AllTransactionsTab = ({ transactions, loading, handleDelete, getCat
                     >
                       <Trash2 className="h-3 w-3 md:h-4 md:w-4 text-destructive" />
                     </Button>
+                    <CreateRuleButton tx={transaction} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -93,7 +94,7 @@ export const NeedsReviewTab = () => {
       .from('transactions')
       .select('*')
       .eq('user_id', session.user.id)
-      .or('needs_review.eq.true,confidence.lt.0.7')
+      .is('category_id', null)
       .order('date', { ascending: false });
 
     if (!error && data) {
@@ -161,6 +162,7 @@ export const NeedsReviewTab = () => {
                             <Check className="h-4 w-4 mr-1" /> Accept
                           </Button>
                         )}
+                        <CreateRuleButton tx={tx} small />
                         <Button size="sm" variant="outline">
                           Edit
                         </Button>
@@ -176,6 +178,32 @@ export const NeedsReviewTab = () => {
     </Card>
   );
 };
+
+function CreateRuleButton({ tx, small = false }: { tx: any; small?: boolean }) {
+  const handleCreateRule = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return toast.error('Not authenticated');
+
+    const pattern = (tx.memo || tx.description || '').toString().slice(0, 64);
+    if (!pattern) return toast.error('Missing description');
+
+    const { error } = await supabase
+      .from('rules')
+      .insert({ user_id: session.user.id, pattern, category: (tx.category || 'other') as any });
+
+    if (error) {
+      toast.error(error.message || 'Failed to create rule');
+    } else {
+      toast.success('Rule created');
+    }
+  };
+
+  return (
+    <Button size={small ? 'sm' : 'default'} variant="outline" onClick={handleCreateRule}>
+      Create Rule
+    </Button>
+  );
+}
 
 export const ReconcileTab = () => (
   <Card>

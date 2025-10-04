@@ -39,7 +39,7 @@ export const FilesTab = ({ selectedFile, handleFileSelect, handleUpload, uploadi
             id="file-upload"
             type="file"
             className="hidden"
-            accept="image/*,.pdf"
+            accept=".csv,.ofx,.qfx,.pdf,image/*,.webp,.heic"
             onChange={handleFileSelect}
           />
         </Label>
