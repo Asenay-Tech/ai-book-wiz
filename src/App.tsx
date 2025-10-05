@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -13,6 +14,7 @@ import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import OwnerTools from "./pages/OwnerTools";
 import NotFound from "./pages/NotFound";
+import ModuleTracker from "./pages/admin/debug/modules"; // ✅ ADD THIS LINE
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,10 @@ const App = () => (
           <Route path="/owner-tools" element={<OwnerTools />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
+
+          {/* ✅ NEW MODULE TRACKER ROUTE */}
+          <Route path="/admin/debug/modules" element={<ModuleTracker />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
