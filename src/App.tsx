@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +15,7 @@ import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import OwnerTools from "./pages/OwnerTools";
 import NotFound from "./pages/NotFound";
-import ModuleTracker from "./pages/admin/debug/modules"; // ✅ ADD THIS LINE
+import ModuleTracker from "./pages/admin/debug/modules";
 
 const queryClient = new QueryClient();
 
@@ -33,10 +34,7 @@ const App = () => (
         <Route path="/owner-tools" element={<OwnerTools />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/settings" element={<Settings />} />
-
-        {/* ✅ NEW MODULE TRACKER ROUTE */}
         <Route path="/admin/debug/modules" element={<ModuleTracker />} />
-
         <Route path="*" element={<NotFound />} />
       </Routes>
     </TooltipProvider>
